@@ -2,15 +2,38 @@ import { useState } from 'react'
 import ChatInterface from './components/ChatInterface'
 import TeamPills from './components/TeamPills'
 
-const LOGO = () => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+const C = {
+  sidebar: '#0a0e1a',
+  main: '#0f1525',
+  green: '#1a9e6e',
+  greenDim: 'rgba(26,158,110,0.15)',
+  border: 'rgba(255,255,255,0.07)',
+  text1: 'rgba(255,255,255,0.85)',
+  text2: 'rgba(255,255,255,0.40)',
+  text3: 'rgba(255,255,255,0.20)',
+  card: 'rgba(255,255,255,0.04)',
+}
+
+const PitchIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="10" stroke={C.green} strokeWidth="1.8"/>
+    <circle cx="12" cy="12" r="3" stroke={C.green} strokeWidth="1.8"/>
+    <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke={C.green} strokeWidth="1.8" strokeLinecap="round"/>
+  </svg>
+)
+
+const Logo = ({ small }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
     <div style={{
-      width: 32, height: 32, borderRadius: 8,
-      background: '#2D6A4F', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      width: small ? 28 : 32, height: small ? 28 : 32, borderRadius: 8,
+      background: C.greenDim, border: `1px solid rgba(26,158,110,0.3)`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     }}>
-      <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2.5px solid #fff' }} />
+      <PitchIcon />
     </div>
-    <span style={{ fontWeight: 700, fontSize: 15, color: '#111827', letterSpacing: 0.2 }}>Pitchside AI</span>
+    <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: small ? 13 : 15, color: C.text1, letterSpacing: 0.3 }}>
+      Pitchside AI
+    </span>
   </div>
 )
 
@@ -27,7 +50,12 @@ export default function App() {
 
   function newSession() {
     const id = Date.now()
-    setSessions(prev => [{ id, title: 'New Tactical Inquiry', messages: [] }, ...prev])
+    const msgs = [{
+      role: 'assistant',
+      answer: "I'm Pitchside AI, your football analysis assistant. Ask me about a team's tactical setup, a manager's philosophy, how a player's role has evolved, or any football question. I'll draw on ingested match reports and analysis, or answer from general knowledge when needed.",
+      sources: [],
+    }]
+    setSessions(prev => [{ id, title: 'New Tactical Inquiry', messages: msgs }, ...prev])
     setActiveId(id)
   }
 
@@ -36,7 +64,7 @@ export default function App() {
       if (s.id !== id) return s
       const firstQ = messages.find(m => m.role === 'user')
       const title = firstQ
-        ? firstQ.text.length > 38 ? firstQ.text.slice(0, 38) + '…' : firstQ.text
+        ? firstQ.text.length > 36 ? firstQ.text.slice(0, 36) + '…' : firstQ.text
         : s.title
       return { ...s, title, messages }
     }))
@@ -58,104 +86,135 @@ export default function App() {
     a.click()
   }
 
+  const sessionTitle = active?.messages.find(m => m.role === 'user')?.text || 'New Tactical Inquiry'
+
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: C.main }}>
       {/* Sidebar */}
       <aside style={{
-        width: 280, flexShrink: 0,
-        background: '#12162A',
-        borderRight: '1px solid #1e2340',
+        width: 268, flexShrink: 0,
+        background: C.sidebar,
+        borderRight: `1px solid ${C.border}`,
         display: 'flex', flexDirection: 'column',
-        padding: '20px 16px',
+        padding: '20px 14px',
       }}>
-        <div style={{ marginBottom: 24 }}>
-          <LOGO />
+        <div style={{ marginBottom: 22 }}>
+          <Logo />
         </div>
 
         <button
           onClick={newSession}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            width: '100%', padding: '10px 14px',
-            background: 'transparent',
-            border: '1px solid #2a304d',
+            width: '100%', padding: '9px 13px',
+            background: C.greenDim,
+            border: `1px solid rgba(26,158,110,0.25)`,
             borderRadius: 8,
-            color: '#e2e8f0', fontSize: 13, fontWeight: 500,
-            cursor: 'pointer', marginBottom: 20,
+            color: C.green, fontSize: 13, fontWeight: 500,
+            cursor: 'pointer', marginBottom: 22,
+            fontFamily: 'DM Sans, sans-serif',
           }}
         >
           New Tactical Inquiry
-          <span style={{ fontSize: 18, lineHeight: 1, color: '#8891A4' }}>+</span>
+          <span style={{ fontSize: 17, lineHeight: 1 }}>+</span>
         </button>
 
-        {/* Team filter pills */}
-        <div style={{ marginBottom: 24 }}>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: '#8891A4', marginBottom: 10, textTransform: 'uppercase' }}>
-            Quick Team Filter
-          </p>
+        {/* Team pills */}
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.3, color: C.text3, marginBottom: 9, textTransform: 'uppercase' }}>
+          Quick Team Filter
+        </p>
+        <div style={{ marginBottom: 22 }}>
           <TeamPills onSelect={setSelectedTeam} selected={selectedTeam} />
         </div>
 
+        {/* Session list */}
         {sessions.length > 0 && (
           <>
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: '#8891A4', marginBottom: 12, textTransform: 'uppercase' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.3, color: C.text3, marginBottom: 9, textTransform: 'uppercase' }}>
               Recent Sessions
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto', flex: 1 }}>
-              {sessions.map(s => (
-                <button
-                  key={s.id}
-                  onClick={() => setActiveId(s.id)}
-                  style={{
-                    background: 'none', border: 'none', textAlign: 'left',
-                    padding: '7px 8px', borderRadius: 6, cursor: 'pointer',
-                    color: s.id === activeId ? '#ffffff' : '#8891A4',
-                    fontWeight: s.id === activeId ? 700 : 400,
-                    fontSize: 13, lineHeight: 1.45,
-                    transition: 'color 0.15s',
-                  }}
-                >
-                  {s.title}
-                </button>
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, overflowY: 'auto', flex: 1 }}>
+              {sessions.map(s => {
+                const isActive = s.id === activeId
+                const hasMsg = s.messages.some(m => m.role === 'user')
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setActiveId(s.id)}
+                    style={{
+                      background: isActive ? C.card : 'none',
+                      border: 'none', textAlign: 'left',
+                      padding: '7px 10px', borderRadius: 7, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 8,
+                    }}
+                  >
+                    <div style={{
+                      width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                      background: isActive ? C.green : hasMsg ? 'rgba(26,158,110,0.4)' : C.text3,
+                    }} />
+                    <span style={{
+                      color: isActive ? C.text1 : C.text2,
+                      fontWeight: isActive ? 500 : 400,
+                      fontSize: 13, lineHeight: 1.4,
+                    }}>
+                      {s.title}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </>
         )}
 
-        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 10, paddingTop: 16 }}>
+        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 10, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
           <div style={{
-            width: 34, height: 34, borderRadius: '50%',
-            background: '#2a304d', flexShrink: 0,
-          }} />
+            width: 32, height: 32, borderRadius: '50%',
+            background: C.greenDim, border: `1px solid rgba(26,158,110,0.3)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: C.green }}>S</span>
+          </div>
           <div>
-            <div style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 600 }}>Scout Account</div>
-            <div style={{ color: '#8891A4', fontSize: 11 }}>Pro Member</div>
+            <div style={{ color: C.text1, fontSize: 13, fontWeight: 500 }}>Scout Account</div>
+            <div style={{ color: C.text3, fontSize: 11 }}>Pro Member</div>
           </div>
         </div>
       </aside>
 
       {/* Main */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#F7F7F5', overflow: 'hidden' }}>
-        {/* Top bar */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Topbar */}
         <header style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 32px',
-          borderBottom: '1px solid #e5e7eb',
-          background: '#F7F7F5',
+          padding: '12px 28px',
+          borderBottom: `1px solid ${C.border}`,
           flexShrink: 0,
         }}>
-          <LOGO />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, boxShadow: `0 0 6px ${C.green}` }} />
+            <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, color: C.text1, fontWeight: 600, maxWidth: 340, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {sessionTitle}
+            </span>
+            <div style={{
+              padding: '3px 10px', borderRadius: 20,
+              background: C.card, border: `1px solid ${C.border}`,
+              fontSize: 11, color: C.text2,
+            }}>
+              14,202 reports indexed
+            </div>
+          </div>
           <button
             onClick={exportReport}
-            disabled={!active?.messages?.length}
+            disabled={!active?.messages?.some(m => m.role === 'user')}
             style={{
-              padding: '9px 20px',
-              background: active?.messages?.length ? '#12162A' : '#d1d5db',
-              border: 'none', borderRadius: 6,
-              color: '#fff', fontSize: 11, fontWeight: 700,
-              letterSpacing: 1.1, textTransform: 'uppercase',
-              cursor: active?.messages?.length ? 'pointer' : 'default',
-              transition: 'background 0.15s',
+              padding: '7px 18px',
+              background: 'transparent',
+              border: `1px solid rgba(26,158,110,0.4)`,
+              borderRadius: 6,
+              color: C.green, fontSize: 11, fontWeight: 700,
+              letterSpacing: 1, textTransform: 'uppercase',
+              cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+              opacity: active?.messages?.some(m => m.role === 'user') ? 1 : 0.35,
             }}
           >
             Export Report
