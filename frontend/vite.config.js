@@ -7,6 +7,7 @@ export default defineConfig({
     proxy: {
       '/query': 'http://127.0.0.1:8000',
       '/ingest': 'http://127.0.0.1:8000',
+      '/upload': 'http://127.0.0.1:8000',
       '/articles': 'http://127.0.0.1:8000',
     },
   },

@@ -197,7 +197,16 @@ def run_agent(question: str) -> tuple[str, list[dict], list[dict]]:
 
         messages.append({"role": "user", "content": tool_results})
     else:
-        answer = "Reached the maximum search iterations without a complete answer."
+        # Force a final synthesis — Claude gathered evidence but didn't write an answer
+        messages.append({"role": "user", "content": "You have gathered enough information. Now write a complete, cited answer to the original question."})
+        final = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=2048,
+            system=[{"type": "text", "text": AGENT_SYSTEM, "cache_control": {"type": "ephemeral"}}],
+            messages=messages,
+        )
+        text_blocks = [b.text for b in final.content if b.type == "text"]
+        answer = "\n\n".join(text_blocks) if text_blocks else "I could not find enough information to answer."
 
     # Deduplicate and build sources
     seen_titles: set[str] = set()

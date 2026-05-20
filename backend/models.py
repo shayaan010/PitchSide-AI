@@ -7,11 +7,18 @@ class QueryFilters(BaseModel):
     date_from: Optional[str] = None
     date_to: Optional[str] = None
     competition: Optional[str] = None
+    article_id: Optional[str] = None
 
 
 class QueryRequest(BaseModel):
     question: str
     filters: Optional[QueryFilters] = None
+
+
+class UploadResponse(BaseModel):
+    article_id: str
+    title: str
+    chunks: int
 
 
 class Source(BaseModel):

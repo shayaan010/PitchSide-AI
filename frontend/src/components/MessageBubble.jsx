@@ -48,6 +48,15 @@ export default function MessageBubble({ message, isWelcome }) {
 
   const trace = message.trace || []
   const hasSources = message.sources?.length > 0
+  const sourceCount = message.sources?.length || 0
+
+  function confidenceLabel(n) {
+    if (n === 0) return null
+    const color = n >= 4 ? '#2D6A4F' : n >= 2 ? '#b45309' : '#6b7280'
+    const label = n >= 4 ? `Strong — backed by ${n} sources` : n >= 2 ? `Moderate — ${n} sources` : `Weak — ${n} source`
+    return { color, label }
+  }
+  const confidence = confidenceLabel(sourceCount)
 
   return (
     <div>
@@ -97,6 +106,15 @@ export default function MessageBubble({ message, isWelcome }) {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {confidence && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: confidence.color, flexShrink: 0 }} />
+          <span style={{ fontSize: 11, color: confidence.color, fontWeight: 600, letterSpacing: 0.3 }}>
+            {confidence.label}
+          </span>
         </div>
       )}
 

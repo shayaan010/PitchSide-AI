@@ -15,11 +15,14 @@ from models import (
     QueryRequest, QueryResponse, Source,
     IngestRequest, IngestResponse,
     ScrapeRequest, ScrapeResponse,
+    UploadResponse,
 )
 from ingest import ingest_directory
 from retrieval import retrieve
+from fastapi import UploadFile, File, HTTPException
 from generate import generate_answer, classify_question
 from agent import run_agent
+from upload import ingest_upload, retrieve_from_upload
 from db import init_db, get_all_articles
 from scraper import scrape_bbc, scrape_guardian, scrape_fbref_fixtures, save_article
 
@@ -40,22 +43,45 @@ app.add_middleware(
 )
 
 
+@app.post("/upload", response_model=UploadResponse)
+async def upload_file(file: UploadFile = File(...)):
+    allowed = {".txt", ".pdf"}
+    ext = "." + file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if ext not in allowed:
+        raise HTTPException(status_code=400, detail="Only .txt and .pdf files are supported.")
+    data = await file.read()
+    if len(data) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large (max 10 MB).")
+    try:
+        result = ingest_upload(file.filename, data, file.content_type or "")
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    return UploadResponse(article_id=result["article_id"], title=result["title"], chunks=result["chunks"])
+
+
 @app.post("/query", response_model=QueryResponse)
 def query(req: QueryRequest):
-    mode = classify_question(req.question)
+    f = req.filters
+    article_id = f.article_id if f else None
+    agent_mode = False
 
-    if mode == "agent":
-        answer, raw_sources, trace = run_agent(req.question)
-    else:
-        f = req.filters
-        chunks = retrieve(
-            req.question,
-            teams=f.teams if f else None,
-            date_from=f.date_from if f else None,
-            date_to=f.date_to if f else None,
-            competition=f.competition if f else None,
-        )
+    if article_id:
+        chunks = retrieve_from_upload(req.question, article_id)
         answer, raw_sources, trace = generate_answer(req.question, chunks)
+    else:
+        mode = classify_question(req.question)
+        if mode == "agent":
+            agent_mode = True
+            answer, raw_sources, trace = run_agent(req.question)
+        else:
+            chunks = retrieve(
+                req.question,
+                teams=f.teams if f else None,
+                date_from=f.date_from if f else None,
+                date_to=f.date_to if f else None,
+                competition=f.competition if f else None,
+            )
+            answer, raw_sources, trace = generate_answer(req.question, chunks)
 
     sources = [
         Source(
@@ -68,7 +94,7 @@ def query(req: QueryRequest):
         )
         for s in raw_sources
     ]
-    return QueryResponse(answer=answer, sources=sources, trace=trace, agent_mode=mode == "agent")
+    return QueryResponse(answer=answer, sources=sources, trace=trace, agent_mode=agent_mode)
 
 
 @app.post("/ingest", response_model=IngestResponse)

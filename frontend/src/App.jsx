@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ChatInterface from './components/ChatInterface'
+import TeamPills from './components/TeamPills'
 
 const LOGO = () => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -14,10 +15,11 @@ const LOGO = () => (
 )
 
 export default function App() {
+  const [selectedTeam, setSelectedTeam] = useState(null)
   const initialId = Date.now()
   const initialMessages = [{
     role: 'assistant',
-    answer: "Hi — I'm Pitchside AI, your football analysis assistant. Ask me about a team's tactical setup, a manager's philosophy, how a player's role has evolved, or any football question. I'll draw on ingested match reports and analysis, or answer from general knowledge when needed.",
+    answer: "I'm Pitchside AI, your football analysis assistant. Ask me about a team's tactical setup, a manager's philosophy, how a player's role has evolved, or any football question. I'll draw on ingested match reports and analysis, or answer from general knowledge when needed.",
     sources: [],
   }]
   const [sessions, setSessions] = useState([{ id: initialId, title: 'New Tactical Inquiry', messages: initialMessages }])
@@ -79,12 +81,20 @@ export default function App() {
             border: '1px solid #2a304d',
             borderRadius: 8,
             color: '#e2e8f0', fontSize: 13, fontWeight: 500,
-            cursor: 'pointer', marginBottom: 28,
+            cursor: 'pointer', marginBottom: 20,
           }}
         >
           New Tactical Inquiry
           <span style={{ fontSize: 18, lineHeight: 1, color: '#8891A4' }}>+</span>
         </button>
+
+        {/* Team filter pills */}
+        <div style={{ marginBottom: 24 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: '#8891A4', marginBottom: 10, textTransform: 'uppercase' }}>
+            Quick Team Filter
+          </p>
+          <TeamPills onSelect={setSelectedTeam} selected={selectedTeam} />
+        </div>
 
         {sessions.length > 0 && (
           <>
@@ -156,6 +166,7 @@ export default function App() {
           session={active}
           onUpdate={(msgs) => active && updateSession(active.id, msgs)}
           onNewSession={newSession}
+          selectedTeam={selectedTeam}
         />
       </div>
     </div>
