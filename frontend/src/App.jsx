@@ -1,116 +1,157 @@
 import { useState } from 'react'
 import ChatInterface from './components/ChatInterface'
 
-const inputStyle = {
-  display: 'block',
-  width: '100%',
-  marginTop: 6,
-  padding: '8px 10px',
-  background: '#1e2130',
-  border: '1px solid #2a2d3a',
-  borderRadius: 6,
-  color: '#e2e8f0',
-  fontSize: 13,
-  boxSizing: 'border-box',
-}
+const LOGO = () => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div style={{
+      width: 32, height: 32, borderRadius: 8,
+      background: '#2D6A4F', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2.5px solid #fff' }} />
+    </div>
+    <span style={{ fontWeight: 700, fontSize: 15, color: '#fff', letterSpacing: 0.2 }}>Pitchside AI</span>
+  </div>
+)
 
 export default function App() {
-  const [filters, setFilters] = useState({
-    teams: '',
-    date_from: '',
-    date_to: '',
-    competition: '',
-  })
+  const [sessions, setSessions] = useState([])
+  const [activeId, setActiveId] = useState(null)
 
-  const set = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }))
+  function newSession() {
+    const id = Date.now()
+    setSessions(prev => [{ id, title: 'New Tactical Inquiry', messages: [] }, ...prev])
+    setActiveId(id)
+  }
+
+  function updateSession(id, messages) {
+    setSessions(prev => prev.map(s => {
+      if (s.id !== id) return s
+      const firstQ = messages.find(m => m.role === 'user')
+      const title = firstQ
+        ? firstQ.text.length > 38 ? firstQ.text.slice(0, 38) + '…' : firstQ.text
+        : s.title
+      return { ...s, title, messages }
+    }))
+  }
+
+  const active = sessions.find(s => s.id === activeId) || null
+
+  function exportReport() {
+    if (!active || !active.messages.length) return
+    const lines = active.messages.map(m =>
+      m.role === 'user'
+        ? `Q: ${m.text}`
+        : `A: ${m.answer}\n\nSources:\n${(m.sources || []).map((s, i) => `[${i + 1}] ${s.title} — ${s.source}, ${s.date}`).join('\n')}`
+    )
+    const blob = new Blob([lines.join('\n\n---\n\n')], { type: 'text/plain' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `${active.title.replace(/\s+/g, '_')}.txt`
+    a.click()
+  }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      {/* Sidebar */}
       <aside style={{
-        width: 260,
-        flexShrink: 0,
-        padding: 24,
-        borderRight: '1px solid #2a2d3a',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 18,
-        background: '#0f1117',
+        width: 280, flexShrink: 0,
+        background: '#12162A',
+        borderRight: '1px solid #1e2340',
+        display: 'flex', flexDirection: 'column',
+        padding: '20px 16px',
       }}>
-        <h2 style={{ color: '#e2e8f0', fontSize: 15, fontWeight: 700, letterSpacing: 0.3 }}>
-          Filters
-        </h2>
-
-        <label style={{ color: '#94a3b8', fontSize: 13 }}>
-          Teams (comma-separated)
-          <input
-            type="text"
-            value={filters.teams}
-            onChange={set('teams')}
-            placeholder="Arsenal, Man City"
-            style={inputStyle}
-          />
-        </label>
-
-        <label style={{ color: '#94a3b8', fontSize: 13 }}>
-          Date from
-          <input
-            type="date"
-            value={filters.date_from}
-            onChange={set('date_from')}
-            style={inputStyle}
-          />
-        </label>
-
-        <label style={{ color: '#94a3b8', fontSize: 13 }}>
-          Date to
-          <input
-            type="date"
-            value={filters.date_to}
-            onChange={set('date_to')}
-            style={inputStyle}
-          />
-        </label>
-
-        <label style={{ color: '#94a3b8', fontSize: 13 }}>
-          Competition
-          <select value={filters.competition} onChange={set('competition')} style={inputStyle}>
-            <option value="">Any</option>
-            <option>Premier League</option>
-            <option>Champions League</option>
-            <option>FA Cup</option>
-            <option>La Liga</option>
-            <option>Bundesliga</option>
-            <option>Serie A</option>
-            <option>Ligue 1</option>
-          </select>
-        </label>
+        <div style={{ marginBottom: 24 }}>
+          <LOGO />
+        </div>
 
         <button
-          onClick={() => setFilters({ teams: '', date_from: '', date_to: '', competition: '' })}
+          onClick={newSession}
           style={{
-            marginTop: 'auto',
-            padding: '8px 12px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            width: '100%', padding: '10px 14px',
             background: 'transparent',
-            border: '1px solid #2a2d3a',
-            borderRadius: 6,
-            color: '#64748b',
-            cursor: 'pointer',
-            fontSize: 13,
+            border: '1px solid #2a304d',
+            borderRadius: 8,
+            color: '#e2e8f0', fontSize: 13, fontWeight: 500,
+            cursor: 'pointer', marginBottom: 28,
           }}
         >
-          Clear filters
+          New Tactical Inquiry
+          <span style={{ fontSize: 18, lineHeight: 1, color: '#8891A4' }}>+</span>
         </button>
+
+        {sessions.length > 0 && (
+          <>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: '#8891A4', marginBottom: 12, textTransform: 'uppercase' }}>
+              Recent Sessions
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto', flex: 1 }}>
+              {sessions.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setActiveId(s.id)}
+                  style={{
+                    background: 'none', border: 'none', textAlign: 'left',
+                    padding: '7px 8px', borderRadius: 6, cursor: 'pointer',
+                    color: s.id === activeId ? '#ffffff' : '#8891A4',
+                    fontWeight: s.id === activeId ? 700 : 400,
+                    fontSize: 13, lineHeight: 1.45,
+                    transition: 'color 0.15s',
+                  }}
+                >
+                  {s.title}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 10, paddingTop: 16 }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: '50%',
+            background: '#2a304d', flexShrink: 0,
+          }} />
+          <div>
+            <div style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 600 }}>Scout Account</div>
+            <div style={{ color: '#8891A4', fontSize: 11 }}>Pro Member</div>
+          </div>
+        </div>
       </aside>
 
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0f1117' }}>
-        <header style={{ padding: '16px 28px', borderBottom: '1px solid #2a2d3a' }}>
-          <h1 style={{ color: '#e2e8f0', fontSize: 19, fontWeight: 700 }}>Football Tactics RAG</h1>
-          <p style={{ color: '#64748b', marginTop: 4, fontSize: 13 }}>
-            Ask tactical questions grounded in ingested match reports and analysis.
-          </p>
+      {/* Main */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#F7F7F5', overflow: 'hidden' }}>
+        {/* Top bar */}
+        <header style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 32px',
+          borderBottom: '1px solid #e5e7eb',
+          background: '#F7F7F5',
+          flexShrink: 0,
+        }}>
+          <LOGO />
+          <button
+            onClick={exportReport}
+            disabled={!active?.messages?.length}
+            style={{
+              padding: '9px 20px',
+              background: active?.messages?.length ? '#12162A' : '#d1d5db',
+              border: 'none', borderRadius: 6,
+              color: '#fff', fontSize: 11, fontWeight: 700,
+              letterSpacing: 1.1, textTransform: 'uppercase',
+              cursor: active?.messages?.length ? 'pointer' : 'default',
+              transition: 'background 0.15s',
+            }}
+          >
+            Export Report
+          </button>
         </header>
-        <ChatInterface filters={filters} />
-      </main>
+
+        <ChatInterface
+          session={active}
+          onUpdate={(msgs) => active && updateSession(active.id, msgs)}
+          onNewSession={newSession}
+        />
+      </div>
     </div>
   )
 }

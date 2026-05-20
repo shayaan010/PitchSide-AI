@@ -6,56 +6,56 @@ export default function MessageBubble({ message }) {
 
   if (message.role === 'user') {
     return (
-      <div style={{ alignSelf: 'flex-end', maxWidth: '70%' }}>
-        <div style={{
-          background: '#3b82f6',
-          color: '#fff',
-          padding: '12px 18px',
-          borderRadius: '14px 14px 4px 14px',
-          fontSize: 14,
-          lineHeight: 1.6,
+      <div>
+        <p style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: 1.4,
+          color: '#9ca3af', textTransform: 'uppercase', marginBottom: 14,
+        }}>
+          Inquiry
+        </p>
+        <h2 style={{
+          fontFamily: "'Playfair Display', Georgia, serif",
+          fontStyle: 'italic',
+          fontSize: 'clamp(28px, 4vw, 42px)',
+          fontWeight: 400,
+          color: '#111827',
+          lineHeight: 1.25,
         }}>
           {message.text}
-        </div>
+        </h2>
       </div>
     )
   }
 
   return (
-    <div style={{ alignSelf: 'flex-start', maxWidth: '88%', display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{
-        background: '#1e2130',
-        border: '1px solid #2a2d3a',
-        color: '#e2e8f0',
-        padding: '16px 20px',
-        borderRadius: '14px 14px 14px 4px',
-        fontSize: 14,
-        lineHeight: 1.8,
-        whiteSpace: 'pre-wrap',
+    <div>
+      <p style={{
+        fontSize: 15, color: '#374151', lineHeight: 1.8,
+        whiteSpace: 'pre-wrap', maxWidth: 720,
       }}>
         {message.answer}
-      </div>
+      </p>
 
       {message.sources?.length > 0 && (
-        <div>
+        <div style={{ marginTop: 20 }}>
           <button
-            onClick={() => setShowSources((v) => !v)}
+            onClick={() => setShowSources(v => !v)}
             style={{
-              background: 'transparent',
-              border: '1px solid #2a2d3a',
+              background: 'none',
+              border: '1px solid #e5e7eb',
               borderRadius: 6,
-              color: '#64748b',
+              color: '#6b7280',
               cursor: 'pointer',
               fontSize: 12,
-              padding: '4px 14px',
+              padding: '5px 14px',
+              fontWeight: 500,
             }}
           >
-            {showSources ? 'Hide' : 'Show'} {message.sources.length} source
-            {message.sources.length !== 1 ? 's' : ''}
+            {showSources ? 'Hide' : 'Show'} {message.sources.length} source{message.sources.length !== 1 ? 's' : ''}
           </button>
 
           {showSources && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
               {message.sources.map((src, i) => (
                 <SourceCard key={i} source={src} index={i + 1} />
               ))}

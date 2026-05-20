@@ -3,39 +3,32 @@ export default function SourceCard({ source, index }) {
 
   return (
     <div style={{
-      background: '#151822',
-      border: '1px solid #2a2d3a',
-      borderRadius: 8,
-      padding: '12px 16px',
+      background: '#fff',
+      border: '1px solid #e5e7eb',
+      borderRadius: 10,
+      padding: '14px 18px',
       fontSize: 13,
+      maxWidth: 720,
     }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
         <span style={{
-          background: '#3b82f6',
-          color: '#fff',
-          borderRadius: 4,
-          padding: '2px 8px',
-          fontSize: 11,
-          fontWeight: 700,
-          flexShrink: 0,
-          marginTop: 2,
+          background: '#12162A', color: '#fff',
+          borderRadius: 4, padding: '2px 8px',
+          fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1,
         }}>
           [{index}]
         </span>
         <div>
-          <div style={{ color: '#e2e8f0', fontWeight: 600, lineHeight: 1.4 }}>{source.title}</div>
-          <div style={{ color: '#64748b', marginTop: 3, fontSize: 12 }}>
-            {source.source} &middot; {source.date} &middot; {source.teams.join(', ')}
+          <div style={{ color: '#111827', fontWeight: 600, lineHeight: 1.4 }}>{source.title}</div>
+          <div style={{ color: '#9ca3af', fontSize: 12, marginTop: 2 }}>
+            {source.source} · {source.date} · {source.teams.join(', ')}
           </div>
         </div>
       </div>
 
       <p style={{
-        color: '#94a3b8',
-        margin: 0,
-        lineHeight: 1.65,
-        borderTop: '1px solid #1e2130',
-        paddingTop: 10,
+        color: '#6b7280', margin: 0, lineHeight: 1.65,
+        borderTop: '1px solid #f3f4f6', paddingTop: 10,
       }}>
         {source.excerpt}
       </p>
@@ -45,7 +38,7 @@ export default function SourceCard({ source, index }) {
           href={source.url}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ color: '#3b82f6', fontSize: 12, marginTop: 10, display: 'inline-block' }}
+          style={{ color: '#2D6A4F', fontSize: 12, marginTop: 8, display: 'inline-block', fontWeight: 500 }}
         >
           View article →
         </a>
