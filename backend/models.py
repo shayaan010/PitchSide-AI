@@ -26,6 +26,8 @@ class Source(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     sources: list[Source]
+    trace: list[dict] = []
+    agent_mode: bool = False
 
 
 class IngestRequest(BaseModel):

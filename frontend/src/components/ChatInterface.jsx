@@ -22,7 +22,7 @@ export default function ChatInterface({ session, onUpdate, onNewSession }) {
     onSuccess: (data) => {
       const next = [
         ...messages,
-        { role: 'assistant', answer: data.answer, sources: data.sources },
+        { role: 'assistant', answer: data.answer, sources: data.sources, trace: data.trace || [] },
       ]
       onUpdate(next)
     },
@@ -71,7 +71,7 @@ export default function ChatInterface({ session, onUpdate, onNewSession }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
             {messages.map((msg, i) => (
-              <MessageBubble key={i} message={msg} />
+              <MessageBubble key={i} message={msg} isWelcome={i === 0 && msg.role === 'assistant' && !msg.sources?.length} />
             ))}
             {mutation.isPending && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

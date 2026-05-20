@@ -9,13 +9,19 @@ const LOGO = () => (
     }}>
       <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2.5px solid #fff' }} />
     </div>
-    <span style={{ fontWeight: 700, fontSize: 15, color: '#fff', letterSpacing: 0.2 }}>Pitchside AI</span>
+    <span style={{ fontWeight: 700, fontSize: 15, color: '#111827', letterSpacing: 0.2 }}>Pitchside AI</span>
   </div>
 )
 
 export default function App() {
-  const [sessions, setSessions] = useState([])
-  const [activeId, setActiveId] = useState(null)
+  const initialId = Date.now()
+  const initialMessages = [{
+    role: 'assistant',
+    answer: "Hi — I'm Pitchside AI, your football analysis assistant. Ask me about a team's tactical setup, a manager's philosophy, how a player's role has evolved, or any football question. I'll draw on ingested match reports and analysis, or answer from general knowledge when needed.",
+    sources: [],
+  }]
+  const [sessions, setSessions] = useState([{ id: initialId, title: 'New Tactical Inquiry', messages: initialMessages }])
+  const [activeId, setActiveId] = useState(initialId)
 
   function newSession() {
     const id = Date.now()

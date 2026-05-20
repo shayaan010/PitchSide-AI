@@ -18,7 +18,8 @@ from models import (
 )
 from ingest import ingest_directory
 from retrieval import retrieve
-from generate import generate_answer
+from generate import generate_answer, classify_question
+from agent import run_agent
 from db import init_db, get_all_articles
 from scraper import scrape_bbc, scrape_guardian, scrape_fbref_fixtures, save_article
 
@@ -41,16 +42,20 @@ app.add_middleware(
 
 @app.post("/query", response_model=QueryResponse)
 def query(req: QueryRequest):
-    f = req.filters
-    chunks = retrieve(
-        req.question,
-        teams=f.teams if f else None,
-        date_from=f.date_from if f else None,
-        date_to=f.date_to if f else None,
-        competition=f.competition if f else None,
-    )
+    mode = classify_question(req.question)
 
-    answer, raw_sources = generate_answer(req.question, chunks)
+    if mode == "agent":
+        answer, raw_sources, trace = run_agent(req.question)
+    else:
+        f = req.filters
+        chunks = retrieve(
+            req.question,
+            teams=f.teams if f else None,
+            date_from=f.date_from if f else None,
+            date_to=f.date_to if f else None,
+            competition=f.competition if f else None,
+        )
+        answer, raw_sources, trace = generate_answer(req.question, chunks)
 
     sources = [
         Source(
@@ -63,7 +68,7 @@ def query(req: QueryRequest):
         )
         for s in raw_sources
     ]
-    return QueryResponse(answer=answer, sources=sources)
+    return QueryResponse(answer=answer, sources=sources, trace=trace, agent_mode=mode == "agent")
 
 
 @app.post("/ingest", response_model=IngestResponse)

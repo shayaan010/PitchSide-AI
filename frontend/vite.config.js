@@ -5,9 +5,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/query': 'http://localhost:8000',
-      '/ingest': 'http://localhost:8000',
-      '/articles': 'http://localhost:8000',
+      '/query': 'http://127.0.0.1:8000',
+      '/ingest': 'http://127.0.0.1:8000',
+      '/articles': 'http://127.0.0.1:8000',
     },
   },
 })

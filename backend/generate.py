@@ -1,21 +1,41 @@
 import os
+import re
 import anthropic
 
 client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
-SYSTEM_PROMPT = """You are a football tactics analyst. Your role is to synthesise precise, evidence-based answers exclusively from the numbered source passages provided.
-
-Rules:
-- Answer ONLY from the source passages given. Do not use outside knowledge.
-- Cite sources inline using [1], [2] etc., matching the numbers in the source list.
-- If the sources lack sufficient information to answer confidently, say so honestly — never speculate or hallucinate.
-- Keep answers focused on tactical specifics: formations, pressing triggers, defensive shape, player roles, transitions, set-piece organisation.
-- Do not engage in general football conversation unrelated to tactics."""
+_AGENT_TRIGGERS = re.compile(
+    r"\b(compare|vs\b|versus|change[sd]?|evolv|differ|better or worse|"
+    r"why did|how did|across the season|over time|progression|timeline)\b",
+    re.IGNORECASE,
+)
 
 
-def generate_answer(question: str, chunks: list[dict]) -> tuple[str, list[dict]]:
+def classify_question(question: str) -> str:
+    """Return 'agent' for complex comparative/temporal questions, 'simple' otherwise."""
+    return "agent" if _AGENT_TRIGGERS.search(question) else "simple"
+
+SYSTEM_PROMPT = """You are a football analyst and expert assistant called Pitchside AI. You can answer any football-related question — tactics, history, players, managers, competitions, transfers, and general knowledge.
+
+When source passages are provided:
+- Prioritise information from the sources and cite them inline using [1], [2] etc.
+- You may supplement with your own knowledge where the sources are incomplete — make clear which parts come from sources and which from general knowledge.
+
+When sources are not relevant or missing:
+- Answer freely using your football knowledge. Do not refuse or say you have no sources.
+
+Always be direct, specific, and analytical. Avoid vague waffle."""
+
+
+def generate_answer(question: str, chunks: list[dict]) -> tuple[str, list[dict], list[dict]]:
     if not chunks:
-        return "No relevant sources were found to answer this question.", []
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=1024,
+            system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
+            messages=[{"role": "user", "content": question}],
+        )
+        return response.content[0].text, [], []
 
     # Group chunks by article so each article gets one citation number
     article_order: list[str] = []
@@ -66,4 +86,4 @@ def generate_answer(question: str, chunks: list[dict]) -> tuple[str, list[dict]]
         for title in article_order
     ]
 
-    return answer, sources
+    return answer, sources, []
