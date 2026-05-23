@@ -1,5 +1,6 @@
 <p align="center">
-  <img src="images/logo.png" alt="Pitchside AI" width="300"/>
+  <img src="<img width="293" height="87" alt="image" src="https://github.com/user-attachments/assets/e560eca0-20f0-4bee-a12c-11d9b4baf8b6" />
+" alt="Pitchside AI" width="300"/>
 </p>
 
 <p align="center">
@@ -24,6 +25,8 @@
 ---
 
 ## About The Project
+<img width="2540" height="1176" alt="image" src="https://github.com/user-attachments/assets/09f2edf1-7484-42f6-85ec-3fd369802bf9" />
+
 
 <p align="center">
   <img src="images/screenshot.png" alt="Pitchside AI Screenshot" width="100%"/>
