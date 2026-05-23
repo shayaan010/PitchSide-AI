@@ -1,7 +1,5 @@
-<p align="center">
-  <img src="<img width="293" height="87" alt="image" src="https://github.com/user-attachments/assets/e560eca0-20f0-4bee-a12c-11d9b4baf8b6" />
-" alt="Pitchside AI" width="300"/>
-</p>
+<img width="313" height="86" alt="image" src="https://github.com/user-attachments/assets/553fb0b0-6d49-45fe-8999-d02ba2acce7f" />
+
 
 <p align="center">
   <strong>A football tactics research workbench — ask questions about team shape, pressing systems, and player evolution, and get answers grounded in real match reports and analysis.</strong>
@@ -27,10 +25,6 @@
 ## About The Project
 <img width="2540" height="1176" alt="image" src="https://github.com/user-attachments/assets/09f2edf1-7484-42f6-85ec-3fd369802bf9" />
 
-
-<p align="center">
-  <img src="images/screenshot.png" alt="Pitchside AI Screenshot" width="100%"/>
-</p>
 
 **Pitchside AI** is a RAG-powered research workbench for football tactics. It lets you query a library of ingested match reports and analysis articles to answer questions like *"How did Arsenal's pressing change from 2022 to 2024?"* — and every answer is grounded in a cited source.
 
