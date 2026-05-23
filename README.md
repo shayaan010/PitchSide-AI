@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="images/logo.png" alt="Lex Harvester" width="300"/>
+  <img src="images/logo.png" alt="Pitchside AI" width="300"/>
 </p>
 
 <p align="center">
-  <strong>A research workbench for personal injury attorneys — built at the EvenUp × OpenClaw Hackathon.</strong>
+  <strong>A football tactics research workbench — ask questions about team shape, pressing systems, and player evolution, and get answers grounded in real match reports and analysis.</strong>
 </p>
 
 ---
@@ -15,7 +15,7 @@
    - [Features](#features)
    - [Built With](#built-with)
 2. [Getting Started](#getting-started)
-3. [Legal Data Coverage](#legal-data-coverage)
+3. [Data Coverage](#data-coverage)
 4. [Key Design Decisions](#key-design-decisions)
 5. [License](#license)
 
@@ -26,28 +26,31 @@
 ## About The Project
 
 <p align="center">
-  <img src="images/screenshot.png" alt="Lex Harvester App Screenshot" width="100%"/>
+  <img src="images/screenshot.png" alt="Pitchside AI Screenshot" width="100%"/>
 </p>
 
-**Lex Harvester** is a research workbench for personal injury attorneys. It helps lawyers surface relevant statutes, pull comparable verdicts, and spot gaps in their research — with every result traceable back to a verified public source.
+**Pitchside AI** is a RAG-powered research workbench for football tactics. It lets you query a library of ingested match reports and analysis articles to answer questions like *"How did Arsenal's pressing change from 2022 to 2024?"* — and every answer is grounded in a cited source.
 
-In law, getting something wrong has real consequences. That principle drove every decision we made: if a source couldn't be verified, the answer wasn't used.
+For complex questions (comparisons, timelines, head-to-heads), it switches into an agentic mode: Claude reasons across multiple searches, filters by team and date, and synthesises a structured answer. If the corpus doesn't support the answer, it says so.
 
 ### Features
 
-- **Statute search** — query across CA, NY, and TX vehicle and traffic law to find relevant statutes instantly
-- **Damages comparables** — surface verdicts from similar cases, each linked to a verified source
-- **Research gap detection** — identify areas of a case that lack supporting precedent or statute
-- **Source-verified outputs** — every result traces back to a real public document; unverifiable answers are discarded
+- **Semantic search** — find relevant statutes, passages, and match reports using local sentence embeddings
+- **Agentic reasoning** — complex comparative or temporal questions trigger a multi-step tool-use loop instead of a single retrieval pass
+- **File upload** — drop in a PDF or `.txt` file and query it directly without ingesting it into the main corpus
+- **Web scraping** — pull articles from BBC Sport, The Guardian, and FBref and ingest them automatically
+- **Multi-session chat** — maintain separate research threads in a sidebar; export any session as a `.txt` file
+- **Team filtering** — scope searches to specific clubs with one click
 
 ### Built With
 
-| Layer    | Tech                                      |
-|----------|-------------------------------------------|
-| LLM      | Anthropic Claude                          |
-| Backend  | FastAPI + SQLite                          |
-| Frontend | React + Vite + shadcn/ui                  |
-| Search   | Local semantic embeddings (no API cost)   |
+| Layer      | Tech                                            |
+|------------|-------------------------------------------------|
+| LLM        | Anthropic Claude (claude-sonnet-4-6)            |
+| Backend    | FastAPI + SQLite                                |
+| Vector DB  | ChromaDB                                        |
+| Embeddings | Sentence-Transformers (all-MiniLM-L6-v2, local) |
+| Frontend   | React 18 + Vite + TanStack Query                |
 
 ---
 
@@ -56,42 +59,73 @@ In law, getting something wrong has real consequences. That principle drove ever
 Add your API key, then verify setup:
 
 ```bash
-nano .env                      # add ANTHROPIC_API_KEY
-uv run python test_claude.py   # → "setup works"
+cp .env.example .env          # copy the template
+nano .env                     # add ANTHROPIC_API_KEY
+uv run python test_claude.py  # → "setup works"
 ```
 
 Start the dev servers (separate terminals):
 
 ```bash
-uv run uvicorn api.main:app --reload --port 8000   # API on :8000
-cd frontend && bun install && bun run dev            # UI on :3000
+uv run uvicorn backend.main:app --reload --port 8000  # API on :8000
+cd frontend && bun install && bun run dev              # UI on :5173
+```
+
+Optionally, scrape and ingest articles to seed the corpus:
+
+```bash
+curl -X POST http://localhost:8000/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"sources": ["bbc", "guardian", "fbref"], "max_articles": 50, "then_ingest": true}'
+```
+
+Or drop `.txt` files into `data/articles/` and trigger ingestion manually:
+
+```bash
+curl -X POST http://localhost:8000/ingest
 ```
 
 ---
 
-## Legal Data Coverage
+## Data Coverage
 
-Lex Harvester currently covers:
+Pitchside AI can ingest articles from:
 
-- **California** — Vehicle Code
-- **New York** — Vehicle & Traffic Law
-- **Texas** — Transportation Code
+- **BBC Sport** — match reports, news, previews
+- **The Guardian** — long-form tactical analysis and opinion
+- **FBref** — structured match reports with lineups, formations, and scores
+
+You can also upload your own `.pdf` or `.txt` files at query time without touching the shared corpus.
 
 ---
 
 ## Key Design Decisions
 
 <details>
-<summary><strong>Why source quotes are mandatory</strong></summary>
+<summary><strong>Why local embeddings instead of an API</strong></summary>
 
-Every result Lex Harvester returns must trace back to a real source document. The extraction pipeline verifies that quoted text actually appears in the source before accepting it — hallucinated quotes are silently dropped and never shown to the user. If we couldn't verify it, we didn't use it.
+Embeddings are generated locally with Sentence-Transformers (`all-MiniLM-L6-v2`). This means zero per-query API cost and no data leaving the machine during indexing. The model is fast enough that ingestion stays interactive even on CPU.
 
 </details>
 
 <details>
-<summary><strong>Why structured extraction over freeform AI responses</strong></summary>
+<summary><strong>Why agentic tool use for complex questions</strong></summary>
 
-Freeform LLM responses are hard to validate. By using Claude's tool use mode with strict Pydantic schemas, every output is machine-validated before it reaches the UI — malformed or incomplete responses are rejected outright.
+A single retrieval pass can't answer "How did Arsenal's high line evolve between 2022 and 2024?" reliably. For questions the classifier identifies as comparative or temporal, the app enters a tool-use loop: Claude calls `search_articles`, `compare_aspects`, or `get_team_matches` iteratively, then synthesises across the results. Freeform answers without this structure tend to hallucinate connections between articles.
+
+</details>
+
+<details>
+<summary><strong>Why citations are required on every answer</strong></summary>
+
+Every answer must reference at least one ingested source. If retrieved chunks don't support the question, the model is instructed to say so rather than fill the gap with inference. Source cards link back to the original URL so you can verify the excerpt yourself.
+
+</details>
+
+<details>
+<summary><strong>Why prompt caching is enabled</strong></summary>
+
+The system prompt (tool definitions + instructions) is marked for Claude's prompt caching. On repeated queries within a session this cuts latency and token cost on the cached prefix — which matters when the system prompt is several hundred tokens long.
 
 </details>
 
