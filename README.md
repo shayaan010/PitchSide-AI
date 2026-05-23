@@ -127,7 +127,3 @@ The system prompt (tool definitions + instructions) is marked for Claude's promp
 </details>
 
 ---
-
-## License
-
-Distributed under the MIT License.
