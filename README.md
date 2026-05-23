@@ -1,10 +1,9 @@
 <div align="center">
 <img width="313" height="86" alt="image" src="https://github.com/user-attachments/assets/553fb0b0-6d49-45fe-8999-d02ba2acce7f" />
 
+### A football tactics research workbench — ask questions about team shape, pressing systems, and player evolution, and get answers grounded in real match reports and analysis.
 
-<p align="center">
-  <strong>A football tactics research workbench — ask questions about team shape, pressing systems, and player evolution, and get answers grounded in real match reports and analysis.</strong>
-</p>
+</div>
 
 ---
 
