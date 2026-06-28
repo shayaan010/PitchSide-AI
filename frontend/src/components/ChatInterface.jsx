@@ -24,7 +24,7 @@ const authHeader = () => API_TOKEN ? { 'X-API-Token': API_TOKEN } : {}
 
 async function postQuery(payload) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 65000)
+  const timer = setTimeout(() => controller.abort(), 120000)
   try {
     const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/query`, {
       method: 'POST',

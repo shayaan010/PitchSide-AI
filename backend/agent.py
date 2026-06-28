@@ -159,7 +159,7 @@ def run_agent(question: str) -> tuple[str, list[dict], list[dict]]:
     all_chunks: list[dict] = []
     trace: list[dict] = []
 
-    for _ in range(6):  # max iterations
+    for _ in range(3):  # max iterations
         response = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=2048,
