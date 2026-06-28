@@ -1,3 +1,5 @@
+import logging
+import os
 import sys
 from pathlib import Path
 
@@ -8,8 +10,12 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from models import (
     QueryRequest, QueryResponse, Source,
@@ -19,12 +25,24 @@ from models import (
 )
 from ingest import ingest_directory
 from retrieval import retrieve
-from fastapi import UploadFile, File, HTTPException
 from generate import generate_answer, classify_question
 from agent import run_agent
 from upload import ingest_upload, retrieve_from_upload
 from db import init_db, get_all_articles
 from scraper import scrape_bbc, scrape_guardian, scrape_fbref_fixtures, save_article
+
+logger = logging.getLogger(__name__)
+
+# --- Auth ---
+_api_key_header = APIKeyHeader(name="X-API-Token", auto_error=False)
+
+def verify_token(api_key: str = Depends(_api_key_header)):
+    expected = os.environ.get("API_TOKEN")
+    if expected and api_key != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+# --- Rate limiter ---
+limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -33,7 +51,16 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Football Tactics RAG", lifespan=lifespan)
+app = FastAPI(
+    title="Football Tactics RAG",
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -44,7 +71,8 @@ app.add_middleware(
 
 
 @app.post("/upload", response_model=UploadResponse)
-async def upload_file(file: UploadFile = File(...)):
+@limiter.limit("5/minute;20/day")
+async def upload_file(request: Request, file: UploadFile = File(...), _: None = Depends(verify_token)):
     allowed = {".txt", ".pdf"}
     ext = "." + file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
     if ext not in allowed:
@@ -55,12 +83,14 @@ async def upload_file(file: UploadFile = File(...)):
     try:
         result = ingest_upload(file.filename, data, file.content_type or "")
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        logger.error("Upload processing error for %s: %s", file.filename, e)
+        raise HTTPException(status_code=422, detail="File could not be processed. Check the format and try again.")
     return UploadResponse(article_id=result["article_id"], title=result["title"], chunks=result["chunks"])
 
 
 @app.post("/query", response_model=QueryResponse)
-def query(req: QueryRequest):
+@limiter.limit("10/minute;100/day")
+def query(request: Request, req: QueryRequest, _: None = Depends(verify_token)):
     f = req.filters
     article_id = f.article_id if f else None
     agent_mode = False
@@ -98,13 +128,18 @@ def query(req: QueryRequest):
 
 
 @app.post("/ingest", response_model=IngestResponse)
-def ingest(req: IngestRequest = IngestRequest()):
-    ingested, skipped, errors = ingest_directory(req.directory)
-    return IngestResponse(ingested=ingested, skipped=skipped, errors=errors)
+@limiter.limit("5/minute")
+def ingest(request: Request, _: None = Depends(verify_token)):
+    ingested, skipped, errors = ingest_directory()
+    sanitized_errors = [f"Failed to process article #{i+1}" for i, _ in enumerate(errors)]
+    if errors:
+        logger.error("Ingest errors: %s", errors)
+    return IngestResponse(ingested=ingested, skipped=skipped, errors=sanitized_errors)
 
 
 @app.get("/articles")
-def articles():
+@limiter.limit("30/minute")
+def articles(request: Request, _: None = Depends(verify_token)):
     rows = get_all_articles()
     for row in rows:
         row["teams"] = [t.strip() for t in row["teams"].split(",")]
@@ -119,7 +154,8 @@ _SCRAPER_MAP = {
 
 
 @app.post("/scrape", response_model=ScrapeResponse)
-def scrape(req: ScrapeRequest):
+@limiter.limit("2/minute;10/day")
+def scrape(request: Request, req: ScrapeRequest, _: None = Depends(verify_token)):
     total_scraped, total_saved, errors = 0, 0, []
 
     for source in req.sources:
@@ -134,14 +170,18 @@ def scrape(req: ScrapeRequest):
                     save_article(article)
                     total_saved += 1
                 except Exception as exc:
-                    errors.append(f"save {article.url}: {exc}")
+                    logger.error("Save error for %s: %s", article.url, exc)
+                    errors.append(f"Failed to save an article from {source}.")
         except Exception as exc:
-            errors.append(f"{source}: {exc}")
+            logger.error("Scrape error for source %s: %s", source, exc)
+            errors.append(f"Scraping {source} failed.")
 
     ingested: int | None = None
     if req.then_ingest:
         n, _, ingest_errors = ingest_directory()
         ingested = n
-        errors.extend(ingest_errors)
+        if ingest_errors:
+            logger.error("Post-scrape ingest errors: %s", ingest_errors)
+            errors.extend(f"Failed to ingest article #{i+1}" for i, _ in enumerate(ingest_errors))
 
     return ScrapeResponse(scraped=total_scraped, saved=total_saved, errors=errors, ingested=ingested)

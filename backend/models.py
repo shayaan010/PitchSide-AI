@@ -38,7 +38,7 @@ class QueryResponse(BaseModel):
 
 
 class IngestRequest(BaseModel):
-    directory: Optional[str] = None
+    pass
 
 
 class IngestResponse(BaseModel):
