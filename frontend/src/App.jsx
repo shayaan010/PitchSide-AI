@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ChatInterface from './components/ChatInterface'
 import TeamPills from './components/TeamPills'
 
@@ -37,8 +37,23 @@ const Logo = ({ small }) => (
   </div>
 )
 
+const HamburgerIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+)
+
 export default function App() {
   const [selectedTeam, setSelectedTeam] = useState(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
   const initialId = Date.now()
   const initialMessages = [{
     role: 'assistant',
@@ -57,6 +72,12 @@ export default function App() {
     }]
     setSessions(prev => [{ id, title: 'New Tactical Inquiry', messages: msgs }, ...prev])
     setActiveId(id)
+    setSidebarOpen(false)
+  }
+
+  function selectSession(id) {
+    setActiveId(id)
+    setSidebarOpen(false)
   }
 
   function updateSession(id, messages) {
@@ -88,18 +109,48 @@ export default function App() {
 
   const sessionTitle = active?.messages.find(m => m.role === 'user')?.text || 'New Tactical Inquiry'
 
-  return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: C.main }}>
-      {/* Sidebar */}
-      <aside style={{
+  const sidebarStyle = isMobile
+    ? {
+        position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50,
         width: 268, flexShrink: 0,
         background: C.sidebar,
         borderRight: `1px solid ${C.border}`,
         display: 'flex', flexDirection: 'column',
         padding: '20px 14px',
-      }}>
-        <div style={{ marginBottom: 22 }}>
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.25s ease',
+      }
+    : {
+        width: 268, flexShrink: 0,
+        background: C.sidebar,
+        borderRight: `1px solid ${C.border}`,
+        display: 'flex', flexDirection: 'column',
+        padding: '20px 14px',
+      }
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: C.main, position: 'relative' }}>
+
+      {/* Mobile backdrop */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 40 }}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside style={sidebarStyle}>
+        <div style={{ marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Logo />
+          {isMobile && (
+            <button
+              onClick={() => setSidebarOpen(false)}
+              style={{ background: 'none', border: 'none', color: C.text2, fontSize: 20, cursor: 'pointer', lineHeight: 1, padding: 4 }}
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         <button
@@ -119,7 +170,6 @@ export default function App() {
           <span style={{ fontSize: 17, lineHeight: 1 }}>+</span>
         </button>
 
-        {/* Team pills */}
         <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.3, color: C.text3, marginBottom: 9, textTransform: 'uppercase' }}>
           Quick Team Filter
         </p>
@@ -127,7 +177,6 @@ export default function App() {
           <TeamPills onSelect={setSelectedTeam} selected={selectedTeam} />
         </div>
 
-        {/* Session list */}
         {sessions.length > 0 && (
           <>
             <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.3, color: C.text3, marginBottom: 9, textTransform: 'uppercase' }}>
@@ -140,7 +189,7 @@ export default function App() {
                 return (
                   <button
                     key={s.id}
-                    onClick={() => setActiveId(s.id)}
+                    onClick={() => selectSession(s.id)}
                     style={{
                       background: isActive ? C.card : 'none',
                       border: 'none', textAlign: 'left',
@@ -186,28 +235,39 @@ export default function App() {
         {/* Topbar */}
         <header style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 28px',
+          padding: isMobile ? '12px 16px' : '12px 28px',
           borderBottom: `1px solid ${C.border}`,
           flexShrink: 0,
+          gap: 8,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, boxShadow: `0 0 6px ${C.green}` }} />
-            <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, color: C.text1, fontWeight: 600, maxWidth: 340, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 14, minWidth: 0 }}>
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                style={{ background: 'none', border: 'none', color: C.text1, cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, padding: 0 }}
+              >
+                <HamburgerIcon />
+              </button>
+            )}
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, boxShadow: `0 0 6px ${C.green}`, flexShrink: 0 }} />
+            <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, color: C.text1, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {sessionTitle}
             </span>
-            <div style={{
-              padding: '3px 10px', borderRadius: 20,
-              background: C.card, border: `1px solid ${C.border}`,
-              fontSize: 11, color: C.text2,
-            }}>
-              14,202 reports indexed
-            </div>
+            {!isMobile && (
+              <div style={{
+                padding: '3px 10px', borderRadius: 20,
+                background: C.card, border: `1px solid ${C.border}`,
+                fontSize: 11, color: C.text2, flexShrink: 0,
+              }}>
+                14,202 reports indexed
+              </div>
+            )}
           </div>
           <button
             onClick={exportReport}
             disabled={!active?.messages?.some(m => m.role === 'user')}
             style={{
-              padding: '7px 18px',
+              padding: isMobile ? '6px 12px' : '7px 18px',
               background: 'transparent',
               border: `1px solid rgba(26,158,110,0.4)`,
               borderRadius: 6,
@@ -215,9 +275,10 @@ export default function App() {
               letterSpacing: 1, textTransform: 'uppercase',
               cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
               opacity: active?.messages?.some(m => m.role === 'user') ? 1 : 0.35,
+              flexShrink: 0,
             }}
           >
-            Export Report
+            Export
           </button>
         </header>
 
