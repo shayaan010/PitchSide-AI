@@ -23,7 +23,7 @@ async function postQuery(payload) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 65000)
   try {
-    const res = await fetch('/query', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -45,7 +45,7 @@ async function postQuery(payload) {
 async function postUpload(file) {
   const form = new FormData()
   form.append('file', file)
-  const res = await fetch('/upload', { method: 'POST', body: form })
+  const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/upload`, { method: 'POST', body: form })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
     throw new Error(err.detail || res.statusText)
