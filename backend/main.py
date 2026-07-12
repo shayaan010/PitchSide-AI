@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
+import anthropic
 from fastapi import FastAPI, Depends, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
@@ -40,6 +41,14 @@ def verify_token(api_key: str = Depends(_api_key_header)):
     expected = os.environ.get("API_TOKEN")
     if expected and api_key != expected:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+# --- BYOK: per-request Anthropic client from the caller's own key ---
+_anthropic_key_header = APIKeyHeader(name="X-Anthropic-Key", auto_error=False)
+
+def get_anthropic_client(api_key: str = Depends(_anthropic_key_header)) -> anthropic.Anthropic:
+    if not api_key:
+        raise HTTPException(status_code=400, detail="Anthropic API key required. Add yours in Settings.")
+    return anthropic.Anthropic(api_key=api_key)
 
 # --- Rate limiter ---
 limiter = Limiter(key_func=get_remote_address)
@@ -90,28 +99,46 @@ async def upload_file(request: Request, file: UploadFile = File(...), _: None = 
 
 @app.post("/query", response_model=QueryResponse)
 @limiter.limit("10/minute;100/day")
-def query(request: Request, req: QueryRequest, _: None = Depends(verify_token)):
+def query(
+    request: Request,
+    req: QueryRequest,
+    _: None = Depends(verify_token),
+    client: anthropic.Anthropic = Depends(get_anthropic_client),
+):
     f = req.filters
     article_id = f.article_id if f else None
     agent_mode = False
 
-    if article_id:
-        chunks = retrieve_from_upload(req.question, article_id)
-        answer, raw_sources, trace = generate_answer(req.question, chunks)
-    else:
-        mode = classify_question(req.question)
-        if mode == "agent":
-            agent_mode = True
-            answer, raw_sources, trace = run_agent(req.question)
+    try:
+        if article_id:
+            chunks = retrieve_from_upload(req.question, article_id)
+            answer, raw_sources, trace = generate_answer(req.question, chunks, client)
         else:
-            chunks = retrieve(
-                req.question,
-                teams=f.teams if f else None,
-                date_from=f.date_from if f else None,
-                date_to=f.date_to if f else None,
-                competition=f.competition if f else None,
-            )
-            answer, raw_sources, trace = generate_answer(req.question, chunks)
+            mode = classify_question(req.question)
+            if mode == "agent":
+                agent_mode = True
+                answer, raw_sources, trace = run_agent(req.question, client)
+            else:
+                chunks = retrieve(
+                    req.question,
+                    teams=f.teams if f else None,
+                    date_from=f.date_from if f else None,
+                    date_to=f.date_to if f else None,
+                    competition=f.competition if f else None,
+                )
+                answer, raw_sources, trace = generate_answer(req.question, chunks, client)
+    except anthropic.AuthenticationError:
+        raise HTTPException(status_code=401, detail="Invalid Anthropic API key.")
+    except anthropic.PermissionDeniedError:
+        raise HTTPException(status_code=403, detail="This key doesn't have permission for that model.")
+    except anthropic.RateLimitError:
+        raise HTTPException(status_code=429, detail="Your Anthropic account hit a rate limit. Try again shortly.")
+    except anthropic.APIStatusError as e:
+        logger.error("Anthropic API error: %s", e)
+        raise HTTPException(status_code=e.status_code, detail="Anthropic API request failed. Check your key and account status.")
+    except anthropic.APIConnectionError as e:
+        logger.error("Anthropic connection error: %s", e)
+        raise HTTPException(status_code=502, detail="Couldn't reach Anthropic. Try again.")
 
     sources = [
         Source(

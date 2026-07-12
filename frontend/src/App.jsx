@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import ChatInterface from './components/ChatInterface'
 import TeamPills from './components/TeamPills'
+import ApiKeyModal from './components/ApiKeyModal'
+
+const API_KEY_STORAGE = 'pitchside_anthropic_key'
 
 const C = {
   sidebar: '#0a0e1a',
@@ -47,6 +50,23 @@ export default function App() {
   const [selectedTeam, setSelectedTeam] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
+  const [apiKey, setApiKey] = useState(() => sessionStorage.getItem(API_KEY_STORAGE) || '')
+  const [keyModalOpen, setKeyModalOpen] = useState(false)
+
+  useEffect(() => {
+    if (!apiKey) setKeyModalOpen(true)
+  }, [])
+
+  function saveApiKey(key) {
+    sessionStorage.setItem(API_KEY_STORAGE, key)
+    setApiKey(key)
+    setKeyModalOpen(false)
+  }
+
+  function clearApiKey() {
+    sessionStorage.removeItem(API_KEY_STORAGE)
+    setApiKey('')
+  }
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768)
@@ -263,23 +283,42 @@ export default function App() {
               </div>
             )}
           </div>
-          <button
-            onClick={exportReport}
-            disabled={!active?.messages?.some(m => m.role === 'user')}
-            style={{
-              padding: isMobile ? '6px 12px' : '7px 18px',
-              background: 'transparent',
-              border: `1px solid rgba(26,158,110,0.4)`,
-              borderRadius: 6,
-              color: C.green, fontSize: 11, fontWeight: 700,
-              letterSpacing: 1, textTransform: 'uppercase',
-              cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
-              opacity: active?.messages?.some(m => m.role === 'user') ? 1 : 0.35,
-              flexShrink: 0,
-            }}
-          >
-            Export
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <button
+              onClick={() => setKeyModalOpen(true)}
+              title={apiKey ? 'Anthropic API key set' : 'Add your Anthropic API key'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '5px 10px', borderRadius: 20,
+                background: C.card, border: `1px solid ${C.border}`,
+                color: C.text2, fontSize: 11, fontWeight: 500,
+                cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+              }}
+            >
+              <div style={{
+                width: 6, height: 6, borderRadius: '50%',
+                background: apiKey ? C.green : '#e08a3c',
+              }} />
+              {!isMobile && (apiKey ? 'API key set' : 'Add API key')}
+            </button>
+            <button
+              onClick={exportReport}
+              disabled={!active?.messages?.some(m => m.role === 'user')}
+              style={{
+                padding: isMobile ? '6px 12px' : '7px 18px',
+                background: 'transparent',
+                border: `1px solid rgba(26,158,110,0.4)`,
+                borderRadius: 6,
+                color: C.green, fontSize: 11, fontWeight: 700,
+                letterSpacing: 1, textTransform: 'uppercase',
+                cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+                opacity: active?.messages?.some(m => m.role === 'user') ? 1 : 0.35,
+                flexShrink: 0,
+              }}
+            >
+              Export
+            </button>
+          </div>
         </header>
 
         <ChatInterface
@@ -287,8 +326,18 @@ export default function App() {
           onUpdate={(msgs) => active && updateSession(active.id, msgs)}
           onNewSession={newSession}
           selectedTeam={selectedTeam}
+          apiKey={apiKey}
+          onRequireKey={() => setKeyModalOpen(true)}
         />
       </div>
+
+      <ApiKeyModal
+        open={keyModalOpen}
+        onClose={() => setKeyModalOpen(false)}
+        value={apiKey}
+        onSave={saveApiKey}
+        onClear={clearApiKey}
+      />
     </div>
   )
 }

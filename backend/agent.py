@@ -1,11 +1,7 @@
 import json
-import os
-import anthropic
 
 from retrieval import retrieve
 from db import get_all_articles
-
-client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 AGENT_SYSTEM = """You are Pitchside AI, an expert football analyst. You have tools to search ingested match reports and articles. Use them to gather evidence before answering.
 
@@ -149,7 +145,7 @@ def _run_tool(name: str, args: dict) -> tuple[str, list[dict]]:
     return json.dumps(result), chunks
 
 
-def run_agent(question: str) -> tuple[str, list[dict], list[dict]]:
+def run_agent(question: str, client) -> tuple[str, list[dict], list[dict]]:
     """
     Run the agentic loop.
     Returns (answer, sources, trace)

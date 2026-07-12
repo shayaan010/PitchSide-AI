@@ -1,8 +1,4 @@
-import os
 import re
-import anthropic
-
-client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 _AGENT_TRIGGERS = re.compile(
     r"\b(compare|vs\b|versus|change[sd]?|evolv|differ|better or worse|"
@@ -27,7 +23,7 @@ When sources are not relevant or missing:
 Always be direct, specific, and analytical. Avoid vague waffle."""
 
 
-def generate_answer(question: str, chunks: list[dict]) -> tuple[str, list[dict], list[dict]]:
+def generate_answer(question: str, chunks: list[dict], client) -> tuple[str, list[dict], list[dict]]:
     if not chunks:
         response = client.messages.create(
             model="claude-sonnet-4-6",

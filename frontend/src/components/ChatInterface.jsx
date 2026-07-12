@@ -22,13 +22,13 @@ const SUGGESTED = [
 const API_TOKEN = import.meta.env.VITE_API_TOKEN || ''
 const authHeader = () => API_TOKEN ? { 'X-API-Token': API_TOKEN } : {}
 
-async function postQuery(payload) {
+async function postQuery(payload, apiKey) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 120000)
   try {
     const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/query`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeader() },
+      headers: { 'Content-Type': 'application/json', ...authHeader(), 'X-Anthropic-Key': apiKey },
       body: JSON.stringify(payload),
       signal: controller.signal,
     })
@@ -56,7 +56,7 @@ async function postUpload(file) {
   return res.json()
 }
 
-export default function ChatInterface({ session, onUpdate, onNewSession, selectedTeam }) {
+export default function ChatInterface({ session, onUpdate, onNewSession, selectedTeam, apiKey, onRequireKey }) {
   const [input, setInput] = useState('')
   const [uploadedFile, setUploadedFile] = useState(null)
   const [uploading, setUploading] = useState(false)
@@ -70,7 +70,7 @@ export default function ChatInterface({ session, onUpdate, onNewSession, selecte
   const wouldUseAgent = agentKeywords.test(input)
 
   const mutation = useMutation({
-    mutationFn: postQuery,
+    mutationFn: (payload) => postQuery(payload, apiKey),
     onSuccess: (data) => {
       onUpdate([...messages, { role: 'assistant', answer: data.answer, sources: data.sources, trace: data.trace || [] }])
     },
@@ -108,6 +108,7 @@ export default function ChatInterface({ session, onUpdate, onNewSession, selecte
     const q = input.trim()
     if (!q || mutation.isPending) return
     if (!session) { onNewSession(); return }
+    if (!apiKey) { onRequireKey(); return }
 
     onUpdate([...messages, { role: 'user', text: q }])
     setInput('')
@@ -120,6 +121,7 @@ export default function ChatInterface({ session, onUpdate, onNewSession, selecte
 
   function sendSuggestion(q) {
     if (!session || mutation.isPending) return
+    if (!apiKey) { onRequireKey(); return }
     onUpdate([...messages, { role: 'user', text: q }])
     mutation.mutate({ question: q })
   }
