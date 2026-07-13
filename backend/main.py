@@ -81,7 +81,7 @@ app.add_middleware(
 
 @app.post("/upload", response_model=UploadResponse)
 @limiter.limit("5/minute;20/day")
-async def upload_file(request: Request, file: UploadFile = File(...), _: None = Depends(verify_token)):
+async def upload_file(request: Request, file: UploadFile = File(...)):
     allowed = {".txt", ".pdf"}
     ext = "." + file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
     if ext not in allowed:
@@ -102,7 +102,6 @@ async def upload_file(request: Request, file: UploadFile = File(...), _: None = 
 def query(
     request: Request,
     req: QueryRequest,
-    _: None = Depends(verify_token),
     client: anthropic.Anthropic = Depends(get_anthropic_client),
 ):
     f = req.filters

@@ -19,16 +19,13 @@ const SUGGESTED = [
   { label: 'Season', q: "How did Chelsea perform across this season?" },
 ]
 
-const API_TOKEN = import.meta.env.VITE_API_TOKEN || ''
-const authHeader = () => API_TOKEN ? { 'X-API-Token': API_TOKEN } : {}
-
 async function postQuery(payload, apiKey) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 120000)
   try {
     const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/query`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeader(), 'X-Anthropic-Key': apiKey },
+      headers: { 'Content-Type': 'application/json', 'X-Anthropic-Key': apiKey },
       body: JSON.stringify(payload),
       signal: controller.signal,
     })
@@ -48,7 +45,7 @@ async function postQuery(payload, apiKey) {
 async function postUpload(file) {
   const form = new FormData()
   form.append('file', file)
-  const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/upload`, { method: 'POST', body: form, headers: authHeader() })
+  const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/upload`, { method: 'POST', body: form })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
     throw new Error(err.detail || res.statusText)
