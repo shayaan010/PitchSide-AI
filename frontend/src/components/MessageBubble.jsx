@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const C = {
   green: '#1a9e6e',
@@ -68,6 +70,78 @@ function SourceChip({ source, index }) {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+const markdownComponents = {
+  h1: ({ children }) => (
+    <h1 style={{ fontSize: 19, fontWeight: 700, color: C.text1, margin: '4px 0 12px', fontFamily: 'Syne, sans-serif' }}>{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 style={{ fontSize: 16, fontWeight: 700, color: C.green, margin: '22px 0 10px', fontFamily: 'Syne, sans-serif' }}>{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 style={{ fontSize: 14, fontWeight: 700, color: C.text1, margin: '16px 0 6px', fontFamily: 'DM Sans, sans-serif' }}>{children}</h3>
+  ),
+  p: ({ children }) => (
+    <p style={{ margin: '0 0 12px', lineHeight: 1.75 }}>{children}</p>
+  ),
+  strong: ({ children }) => (
+    <strong style={{ color: C.text1, fontWeight: 700 }}>{children}</strong>
+  ),
+  em: ({ children }) => (
+    <em style={{ color: C.text2 }}>{children}</em>
+  ),
+  hr: () => (
+    <hr style={{ border: 'none', borderTop: `1px solid ${C.border}`, margin: '16px 0' }} />
+  ),
+  ul: ({ children }) => (
+    <ul style={{ margin: '0 0 12px', paddingLeft: 20 }}>{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol style={{ margin: '0 0 12px', paddingLeft: 20 }}>{children}</ol>
+  ),
+  li: ({ children }) => (
+    <li style={{ marginBottom: 4, lineHeight: 1.7 }}>{children}</li>
+  ),
+  a: ({ href, children }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: C.green }}>{children}</a>
+  ),
+  code: ({ children }) => (
+    <code style={{
+      background: C.card, border: `1px solid ${C.border}`, borderRadius: 4,
+      padding: '1px 5px', fontSize: 12.5, fontFamily: 'monospace', color: C.text1,
+    }}>{children}</code>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote style={{
+      margin: '0 0 12px', paddingLeft: 12,
+      borderLeft: `2px solid ${C.border}`, color: C.text2,
+    }}>{children}</blockquote>
+  ),
+  table: ({ children }) => (
+    <div style={{ overflowX: 'auto', marginBottom: 12 }}>
+      <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>{children}</table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th style={{ textAlign: 'left', padding: '6px 10px', borderBottom: `1px solid ${C.border}`, color: C.text1 }}>{children}</th>
+  ),
+  td: ({ children }) => (
+    <td style={{ padding: '6px 10px', borderBottom: `1px solid ${C.border}`, color: C.text2 }}>{children}</td>
+  ),
+}
+
+function Answer({ text }) {
+  return (
+    <div style={{
+      fontSize: 14, color: C.text1, maxWidth: 680,
+      fontFamily: 'DM Sans, sans-serif',
+    }}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+        {text}
+      </ReactMarkdown>
     </div>
   )
 }
@@ -177,13 +251,7 @@ export default function MessageBubble({ message, isWelcome }) {
         )}
 
         {/* Answer */}
-        <p style={{
-          fontSize: 14, color: C.text1, lineHeight: 1.85,
-          whiteSpace: 'pre-wrap', maxWidth: 680, margin: 0,
-          fontFamily: 'DM Sans, sans-serif',
-        }}>
-          {message.answer}
-        </p>
+        <Answer text={message.answer} />
 
         {/* Source chips */}
         {sources.length > 0 && (

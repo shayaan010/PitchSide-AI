@@ -15,7 +15,6 @@ from fastapi import FastAPI, Depends, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from models import (
@@ -51,7 +50,18 @@ def get_anthropic_client(api_key: str = Depends(_anthropic_key_header)) -> anthr
     return anthropic.Anthropic(api_key=api_key)
 
 # --- Rate limiter ---
-limiter = Limiter(key_func=get_remote_address)
+def get_client_ip(request: Request) -> str:
+    # Railway's edge proxy is the only way to reach this app, so the
+    # left-most X-Forwarded-For entry (the original client) can be trusted
+    # here — request.client.host would otherwise be Railway's proxy IP,
+    # shared by every request.
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "127.0.0.1"
+
+
+limiter = Limiter(key_func=get_client_ip)
 
 
 @asynccontextmanager

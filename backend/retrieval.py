@@ -69,8 +69,12 @@ def _build_where(
     date_from: Optional[str],
     date_to: Optional[str],
     competition: Optional[str],
-) -> Optional[dict]:
-    conditions = []
+) -> dict:
+    # Exclude uploaded documents from the default query path. Uploads are
+    # public and unauthenticated, so they must never surface in other
+    # users' answers — only retrieve_from_upload (scoped by article_id)
+    # may return them.
+    conditions = [{"source": {"$ne": "Upload"}}]
     if date_from:
         conditions.append({"article_date": {"$gte": date_from}})
     if date_to:
@@ -78,8 +82,6 @@ def _build_where(
     if competition:
         conditions.append({"competition": {"$eq": competition}})
 
-    if not conditions:
-        return None
     if len(conditions) == 1:
         return conditions[0]
     return {"$and": conditions}

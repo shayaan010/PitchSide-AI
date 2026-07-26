@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 
@@ -11,7 +11,7 @@ class QueryFilters(BaseModel):
 
 
 class QueryRequest(BaseModel):
-    question: str
+    question: str = Field(min_length=1, max_length=1000)
     filters: Optional[QueryFilters] = None
 
 
@@ -49,7 +49,7 @@ class IngestResponse(BaseModel):
 
 class ScrapeRequest(BaseModel):
     sources: list[str] = ["bbc", "guardian", "fbref"]
-    max_articles: int = 50
+    max_articles: int = Field(default=50, ge=1, le=50)
     then_ingest: bool = False
 
 
