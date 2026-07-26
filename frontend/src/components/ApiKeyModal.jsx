@@ -53,8 +53,8 @@ export default function ApiKeyModal({ open, onClose, value, onSave, onClear }) {
         </h2>
         <p style={{ fontSize: 13, color: C.text2, lineHeight: 1.5, margin: 0, marginBottom: 16 }}>
           Pitchside AI uses your own Claude API key to answer questions, so you're only ever billed for
-          your own usage. The key is kept only in this browser tab and is cleared when the tab closes —
-          it's never stored on our servers.
+          your own usage. The key is kept only in this browser tab and is cleared when the tab closes. 
+          The key is never stored in our servers.
         </p>
 
         <input

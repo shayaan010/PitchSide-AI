@@ -18,7 +18,6 @@
 2. [Getting Started](#getting-started)
 3. [Data Coverage](#data-coverage)
 4. [Key Design Decisions](#key-design-decisions)
-5. [License](#license)
 
 </details>
 
@@ -34,7 +33,7 @@ For complex questions (comparisons, timelines, head-to-heads), it switches into 
 
 ### Features
 
-- **Semantic search** — find relevant statutes, passages, and match reports using local sentence embeddings
+- **Semantic search** — find relevant articles, passages, and match reports using local sentence embeddings
 - **Agentic reasoning** — complex comparative or temporal questions trigger a multi-step tool-use loop instead of a single retrieval pass
 - **File upload** — drop in a PDF or `.txt` file and query it directly without ingesting it into the main corpus
 - **Web scraping** — pull articles from BBC Sport, The Guardian, and FBref and ingest them automatically
@@ -55,20 +54,16 @@ For complex questions (comparisons, timelines, head-to-heads), it switches into 
 
 ## Getting Started
 
-Add your API key, then verify setup:
-
-```bash
-cp .env.example .env          # copy the template
-nano .env                     # add ANTHROPIC_API_KEY
-uv run python test_claude.py  # → "setup works"
-```
-
 Start the dev servers (separate terminals):
 
 ```bash
 uv run uvicorn backend.main:app --reload --port 8000  # API on :8000
 cd frontend && bun install && bun run dev              # UI on :5173
 ```
+
+Pitchside AI is **BYOK (Bring Your Own Key)**: the backend does not hold an Anthropic key. Open the app, add your own Anthropic API key in Settings, and it's stored in your browser's `sessionStorage` for that tab — sent per-request as an `X-Anthropic-Key` header and never persisted server-side.
+
+`.env` is optional and only used for deployment/admin config, e.g. `API_TOKEN` to lock down admin-only endpoints (scrape/ingest) behind an `X-API-Token` header. Copy `.env.example` to `.env` if you need those.
 
 Optionally, scrape and ingest articles to seed the corpus:
 

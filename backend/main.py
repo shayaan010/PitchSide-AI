@@ -39,7 +39,7 @@ _api_key_header = APIKeyHeader(name="X-API-Token", auto_error=False)
 
 def verify_token(api_key: str = Depends(_api_key_header)):
     expected = os.environ.get("API_TOKEN")
-    if expected and api_key != expected:
+    if not expected or api_key != expected:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 # --- BYOK: per-request Anthropic client from the caller's own key ---
