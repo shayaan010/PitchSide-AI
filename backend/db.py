@@ -58,6 +58,52 @@ def record_article(
         )
 
 
+def get_corpus_stats() -> dict:
+    with _conn() as conn:
+        row = conn.execute(
+            """SELECT COUNT(*) AS articles, COALESCE(SUM(chunk_count), 0) AS chunks
+               FROM articles WHERE source != 'Upload'"""
+        ).fetchone()
+        return {"articles": row["articles"], "chunks": row["chunks"]}
+
+
+def get_team_summary(aliases: set[str], recent_limit: int = 5) -> dict:
+    with _conn() as conn:
+        rows = conn.execute(
+            """SELECT title, source, url, article_date, teams, competition
+               FROM articles WHERE source != 'Upload'
+               ORDER BY article_date DESC"""
+        ).fetchall()
+
+    matched = [
+        row for row in rows
+        if {t.strip().lower() for t in row["teams"].split(",")} & aliases
+    ]
+
+    dates = sorted(row["article_date"] for row in matched if row["article_date"])
+    competitions: dict[str, int] = {}
+    for row in matched:
+        comp = (row["competition"] or "").strip()
+        if comp and comp != "Football":
+            competitions[comp] = competitions.get(comp, 0) + 1
+
+    return {
+        "articles": len(matched),
+        "date_from": dates[0] if dates else None,
+        "date_to": dates[-1] if dates else None,
+        "competitions": sorted(competitions, key=competitions.get, reverse=True)[:4],
+        "recent": [
+            {
+                "title": row["title"],
+                "source": row["source"],
+                "url": row["url"],
+                "date": row["article_date"],
+            }
+            for row in matched[:recent_limit]
+        ],
+    }
+
+
 def get_all_articles() -> list[dict]:
     with _conn() as conn:
         rows = conn.execute(

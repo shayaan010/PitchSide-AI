@@ -12,7 +12,8 @@
       "Bash(./.venv/Scripts/python.exe -c ' *)",
       "Bash(./.venv/Scripts/python.exe \"C:/Users/User/AppData/Local/Temp/claude/C--Users-User-fplproject/75312f88-fddc-4377-9d38-444c2fca0cb5/scratchpad/test_logic.py\")",
       "Bash(./.venv/Scripts/python.exe \"C:/Users/User/AppData/Local/Temp/claude/C--Users-User-fplproject/75312f88-fddc-4377-9d38-444c2fca0cb5/scratchpad/test_caps.py\")",
-      "Bash(grep -n \"{/\\\\*\\\\|^\\\\s*//\" frontend/src/components/MessageBubble.jsx frontend/src/components/SourceCard.jsx frontend/src/safeUrl.js)"
+      "Bash(grep -n \"{/\\\\*\\\\|^\\\\s*//\" frontend/src/components/MessageBubble.jsx frontend/src/components/SourceCard.jsx frontend/src/safeUrl.js)",
+      "Bash(./backend/.venv/Scripts/python.exe -c ' *)"
     ]
   }
 }

@@ -2,6 +2,27 @@ from typing import Optional
 
 from ingest import get_embedder, get_collection
 
+TEAM_ALIASES = {
+    "man city": ["manchester city"],
+    "man utd": ["manchester united"],
+    "man united": ["manchester united"],
+    "spurs": ["tottenham"],
+    "tottenham": ["spurs"],
+    "wolves": ["wolverhampton"],
+    "wolverhampton": ["wolves"],
+}
+
+
+def expand_teams(teams: list[str]) -> set[str]:
+    expanded: set[str] = set()
+    for team in teams:
+        key = team.strip().lower()
+        if not key:
+            continue
+        expanded.add(key)
+        expanded.update(TEAM_ALIASES.get(key, []))
+    return expanded
+
 
 def retrieve(
     query: str,
@@ -37,14 +58,16 @@ def retrieve(
     except Exception:
         return []
 
+    wanted = expand_teams(teams) if teams else set()
+
     chunks: list[dict] = []
     for doc, meta, dist in zip(
         results["documents"][0],
         results["metadatas"][0],
         results["distances"][0],
     ):
-        chunk_teams = [t.strip().lower() for t in meta.get("teams", "").split(",")]
-        if teams and not any(t.strip().lower() in chunk_teams for t in teams):
+        chunk_teams = {t.strip().lower() for t in meta.get("teams", "").split(",")}
+        if wanted and not (wanted & chunk_teams):
             continue
 
         chunks.append(

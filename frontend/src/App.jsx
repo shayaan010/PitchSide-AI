@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import ChatInterface from './components/ChatInterface'
 import TeamPills from './components/TeamPills'
 import ApiKeyModal from './components/ApiKeyModal'
+import TeamModal from './components/TeamModal'
 
 const API_KEY_STORAGE = 'pitchside_anthropic_key'
 
@@ -52,6 +53,15 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
   const [apiKey, setApiKey] = useState(() => sessionStorage.getItem(API_KEY_STORAGE) || '')
   const [keyModalOpen, setKeyModalOpen] = useState(false)
+  const [stats, setStats] = useState(null)
+  const [teamModal, setTeamModal] = useState(null)
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL || ''}/stats`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(setStats)
+      .catch(() => setStats(null))
+  }, [])
 
   useEffect(() => {
     if (!apiKey) setKeyModalOpen(true)
@@ -194,7 +204,7 @@ export default function App() {
           Quick Team Filter
         </p>
         <div style={{ marginBottom: 22 }}>
-          <TeamPills onSelect={setSelectedTeam} selected={selectedTeam} />
+          <TeamPills onOpen={setTeamModal} selected={selectedTeam} />
         </div>
 
         {sessions.length > 0 && (
@@ -235,19 +245,6 @@ export default function App() {
           </>
         )}
 
-        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 10, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: '50%',
-            background: C.greenDim, border: `1px solid rgba(26,158,110,0.3)`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: C.green }}>S</span>
-          </div>
-          <div>
-            <div style={{ color: C.text1, fontSize: 13, fontWeight: 500 }}>Scout Account</div>
-            <div style={{ color: C.text3, fontSize: 11 }}>Pro Member</div>
-          </div>
-        </div>
       </aside>
 
       {/* Main */}
@@ -273,13 +270,13 @@ export default function App() {
             <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, color: C.text1, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {sessionTitle}
             </span>
-            {!isMobile && (
+            {!isMobile && stats && (
               <div style={{
                 padding: '3px 10px', borderRadius: 20,
                 background: C.card, border: `1px solid ${C.border}`,
                 fontSize: 11, color: C.text2, flexShrink: 0,
               }}>
-                14,202 reports indexed
+                {stats.articles.toLocaleString()} articles · {stats.chunks.toLocaleString()} chunks indexed
               </div>
             )}
           </div>
@@ -337,6 +334,14 @@ export default function App() {
         value={apiKey}
         onSave={saveApiKey}
         onClear={clearApiKey}
+      />
+
+      <TeamModal
+        team={teamModal}
+        onClose={() => setTeamModal(null)}
+        isFiltered={selectedTeam === teamModal}
+        onFilter={() => { setSelectedTeam(teamModal); setTeamModal(null); setSidebarOpen(false) }}
+        onClearFilter={() => { setSelectedTeam(null); setTeamModal(null) }}
       />
     </div>
   )

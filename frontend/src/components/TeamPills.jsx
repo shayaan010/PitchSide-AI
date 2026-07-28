@@ -5,7 +5,7 @@ const TEAMS = [
 
 const green = '#1a9e6e'
 
-export default function TeamPills({ selected, onSelect }) {
+export default function TeamPills({ selected, onOpen }) {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
       {TEAMS.map(team => {
@@ -13,7 +13,7 @@ export default function TeamPills({ selected, onSelect }) {
         return (
           <button
             key={team}
-            onClick={() => onSelect(active ? null : team)}
+            onClick={() => onOpen(team)}
             style={{
               padding: '4px 11px',
               borderRadius: 20,

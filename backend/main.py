@@ -26,11 +26,11 @@ from models import (
     UploadResponse,
 )
 from ingest import ingest_directory
-from retrieval import retrieve
+from retrieval import retrieve, expand_teams
 from generate import generate_answer, classify_question
 from agent import run_agent
 from upload import ingest_upload, retrieve_from_upload
-from db import init_db, get_all_articles
+from db import init_db, get_all_articles, get_corpus_stats, get_team_summary
 from scraper import scrape_bbc, scrape_guardian, scrape_fbref_fixtures, save_article
 
 logger = logging.getLogger(__name__)
@@ -191,6 +191,21 @@ def ingest(request: Request, _: None = Depends(verify_token)):
     if errors:
         logger.error("Ingest errors: %s", errors)
     return IngestResponse(ingested=ingested, skipped=skipped, errors=sanitized_errors)
+
+
+@app.get("/stats")
+@limiter.limit("60/minute")
+def stats(request: Request):
+    return get_corpus_stats()
+
+
+@app.get("/team/{name}")
+@limiter.limit("60/minute")
+def team(request: Request, name: str):
+    if not name.strip() or len(name) > 60:
+        raise HTTPException(status_code=400, detail="Invalid team name.")
+    summary = get_team_summary(expand_teams([name]))
+    return {"name": name, **summary}
 
 
 @app.get("/articles")
