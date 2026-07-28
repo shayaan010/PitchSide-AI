@@ -87,8 +87,6 @@ Pitchside AI is **BYOK (Bring Your Own Key)**: the backend does not hold an Anth
 
 ## Maintaining the Corpus
 
-> [!IMPORTANT]
-> The app serves Chroma from a throwaway copy at `backend/data/chroma_runtime/` (gitignored) so that normal use never modifies the 12 MB index committed to the repo. **Ingesting without `CHROMA_PATH` set will appear to work locally but will not update the shipped index, and the change will not reach production.**
 
 To rebuild the index that actually ships, point `CHROMA_PATH` at the seed directory before starting the server or running the seed script:
 
@@ -148,10 +146,6 @@ You can also upload your own `.pdf` or `.txt` files at query time. Uploads are s
 
 The frontend deploys to Vercel from `frontend/`. The backend deploys to Railway with **Root Directory set to `/backend`**.
 
-> [!WARNING]
-> That Root Directory setting is load-bearing and is not visible anywhere in the repo. All data paths resolve relative to `backend/`, so pointing Railway at the repo root instead will leave the container without a corpus, and the app will answer every question from general knowledge with no sources and no error.
-
-Railway's filesystem is ephemeral, which is why the index is committed rather than generated at deploy time.
 
 ---
 
