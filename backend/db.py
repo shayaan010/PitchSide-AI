@@ -58,6 +58,19 @@ def record_article(
         )
 
 
+def get_upload_articles() -> list[dict]:
+    with _conn() as conn:
+        rows = conn.execute(
+            "SELECT id, filename FROM articles WHERE source = 'Upload' ORDER BY ingested_at ASC"
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+
+def delete_article(article_id: str):
+    with _conn() as conn:
+        conn.execute("DELETE FROM articles WHERE id = ?", (article_id,))
+
+
 def get_corpus_stats() -> dict:
     with _conn() as conn:
         row = conn.execute(

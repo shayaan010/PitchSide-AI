@@ -1,13 +1,15 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Annotated, Optional
+
+ShortStr = Annotated[str, Field(max_length=64)]
 
 
 class QueryFilters(BaseModel):
-    teams: Optional[list[str]] = None
-    date_from: Optional[str] = None
-    date_to: Optional[str] = None
-    competition: Optional[str] = None
-    article_id: Optional[str] = None
+    teams: Optional[Annotated[list[ShortStr], Field(max_length=10)]] = None
+    date_from: Optional[ShortStr] = None
+    date_to: Optional[ShortStr] = None
+    competition: Optional[ShortStr] = None
+    article_id: Optional[ShortStr] = None
 
 
 class QueryRequest(BaseModel):
@@ -48,7 +50,7 @@ class IngestResponse(BaseModel):
 
 
 class ScrapeRequest(BaseModel):
-    sources: list[str] = ["bbc", "guardian", "fbref"]
+    sources: Annotated[list[ShortStr], Field(max_length=10)] = ["bbc", "guardian", "fbref"]
     max_articles: int = Field(default=50, ge=1, le=50)
     then_ingest: bool = False
 

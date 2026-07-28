@@ -5,12 +5,13 @@ from pathlib import Path
 from typing import Optional
 
 from ingest import get_embedder, get_collection, chunk_text
-from db import init_db, record_article, is_ingested
+from db import init_db, record_article, is_ingested, get_upload_articles, delete_article
 
 logger = logging.getLogger(__name__)
 
 ARTICLES_PATH = Path(__file__).parent.parent / "data" / "articles"
 
+MAX_STORED_UPLOADS = 50
 MAX_PDF_PAGES = 200
 MAX_EXTRACTED_CHARS = 500_000
 
@@ -31,6 +32,35 @@ def _extract_text_pdf(data: bytes) -> str:
             pages.append(text)
             total += len(text)
     return "\n\n".join(pages)
+
+
+def _prune_uploads():
+    uploads = get_upload_articles()
+    excess = len(uploads) - MAX_STORED_UPLOADS
+    if excess <= 0:
+        return
+
+    collection = get_collection()
+    root = ARTICLES_PATH.resolve()
+
+    for row in uploads[:excess]:
+        try:
+            collection.delete(where={"article_id": {"$eq": row["id"]}})
+        except Exception as exc:
+            logger.error("Chroma prune failed for %s: %s", row["id"], exc)
+
+        try:
+            dest = (ARTICLES_PATH / row["filename"]).resolve()
+            if dest.parent == root:
+                dest.unlink(missing_ok=True)
+            else:
+                logger.error("Refusing to prune file outside corpus: %s", dest)
+        except OSError as exc:
+            logger.error("File prune failed for %s: %s", row["filename"], exc)
+
+        delete_article(row["id"])
+
+    logger.info("Pruned %d uploaded article(s)", excess)
 
 
 def _extract_text_txt(data: bytes) -> str:
@@ -111,6 +141,8 @@ def ingest_upload(
             article_id, article_title, "Upload", "", today,
             "", "Uploaded Document", safe_name, len(chunks),
         )
+
+    _prune_uploads()
 
     return {"article_id": article_id, "chunks": len(chunks), "title": article_title}
 

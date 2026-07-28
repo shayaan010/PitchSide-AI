@@ -88,16 +88,19 @@ app.add_middleware(
 )
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+MAX_BODY_BYTES = 256 * 1024
 _MULTIPART_SLACK = 64 * 1024
 _UPLOAD_CHUNK = 64 * 1024
 
 
 @app.middleware("http")
-async def reject_oversized_uploads(request: Request, call_next):
-    if request.url.path == "/upload":
-        declared = request.headers.get("content-length")
-        if declared and declared.isdigit() and int(declared) > MAX_UPLOAD_BYTES + _MULTIPART_SLACK:
-            return JSONResponse(status_code=413, content={"detail": "File too large (max 10 MB)."})
+async def reject_oversized_bodies(request: Request, call_next):
+    is_upload = request.url.path == "/upload"
+    limit = MAX_UPLOAD_BYTES + _MULTIPART_SLACK if is_upload else MAX_BODY_BYTES
+    declared = request.headers.get("content-length")
+    if declared and declared.isdigit() and int(declared) > limit:
+        detail = "File too large (max 10 MB)." if is_upload else "Request body too large."
+        return JSONResponse(status_code=413, content={"detail": detail})
     return await call_next(request)
 
 
