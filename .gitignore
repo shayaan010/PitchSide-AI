@@ -13,8 +13,8 @@ env/
 # Rebuild with `python backend/seed.py` or POST /ingest, then re-commit.
 *.sqlite3-wal
 *.sqlite3-shm
-data/articles.db-wal
-data/articles.db-shm
+backend/data/articles.db-wal
+backend/data/articles.db-shm
 
 # Node
 frontend/node_modules/

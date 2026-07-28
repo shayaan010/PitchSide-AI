@@ -3,7 +3,7 @@ from pathlib import Path
 from contextlib import contextmanager
 from datetime import datetime
 
-DB_PATH = Path(__file__).parent.parent / "data" / "articles.db"
+DB_PATH = Path(__file__).parent / "data" / "articles.db"
 
 
 def init_db():

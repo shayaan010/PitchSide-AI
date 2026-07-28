@@ -1,0 +1,23 @@
+SOURCE: The Athletic
+URL: https://example.com/arsenal-pressing-arteta-2023
+DATE: 2023-09-12
+TEAMS: Arsenal
+COMPETITION: Premier League
+TITLE: How Arteta rebuilt Arsenal's press
+---
+
+Arsenal's pressing system under Mikel Arteta has undergone a fundamental transformation since his arrival in December 2019. Where the team once pressed reactively and inconsistently, by the 2022-23 season they had developed one of the most structured high-press systems in European football.
+
+The cornerstone of Arsenal's press is what the coaching staff call the "curved press trigger." When the opposition goalkeeper receives the ball, Arsenal's front three — typically Gabriel Martinelli on the left, Gabriel Jesus through the middle, and Bukayo Saka on the right — adopt a curved press shape designed to channel play wide. The press is not about winning the ball immediately; it is about forcing the opposition into a predetermined corridor.
+
+What separates Arsenal's press from more energetic but less structured approaches is the defensive architecture behind the front line. The two central midfielders — most often Thomas Partey and Martin Odegaard — do not press. They hold their shape and position themselves to cover the escape lanes: the central half-spaces where a composed goalkeeper might try to play out. Their job is interception, not chase.
+
+The full-backs play a decisive role in the press shape. Ben White on the right has been repositioned as an inverted full-back, tucking narrower when Arsenal are out of possession. This prevents the standard wide outlet that opposition teams rely on to bypass a conventional press. On the left, Oleksandr Zinchenko pushes into midfield, effectively creating a 3-2 defensive block behind the press and freeing Martinelli to commit aggressively to the press without defensive responsibility.
+
+Data from the 2022-23 Premier League season showed Arsenal averaged 18.2 PPDA (passes allowed per defensive action), the second-best figure in the division behind Manchester City. Their press success rate — regaining possession within five seconds of a press action — stood at 31%, against a league average of 24%.
+
+Arsenal's press has evolved further in the early weeks of the 2023-24 campaign. Arteta has introduced a secondary trigger: when an opposition centre-midfielder receives with their back to goal in their own half, the nearest Arsenal forward presses with curved runs while midfield holds the block. This allows Arsenal to press higher in the pitch than their shape would conventionally allow, because the curved runs of the front three limit the forward escape passes.
+
+One tactical wrinkle that has emerged is Leandro Trossard's role as a press conductor from the left. Unlike Martinelli, who presses with explosive intensity in near-straight lines, Trossard's diagonal press runs create wider channels that force defenders toward the Arsenal midfield's recovery zone. Arteta acknowledged this distinction in his pre-match press conference, noting that Trossard's "intelligence and reading of the game" allows him to make the press effective without personally winning the ball back.
+
+In matches where Arsenal completed more than 12 pressing sequences — defined as at least two consecutive press actions leading to a turnover or opposition clearance — their win rate across the 2022-23 and early 2023-24 seasons exceeded 80%. This underlines how central the press is not just to Arsenal's defensive identity, but to their ability to generate attacking transitions from regains in advanced areas.

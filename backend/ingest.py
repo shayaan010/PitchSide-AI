@@ -8,8 +8,8 @@ from sentence_transformers import SentenceTransformer
 
 from db import init_db, is_ingested, record_article
 
-CHROMA_PATH = Path(__file__).parent.parent / "data" / "chroma"
-ARTICLES_PATH = Path(__file__).parent.parent / "data" / "articles"
+CHROMA_PATH = Path(__file__).parent / "data" / "chroma"
+ARTICLES_PATH = Path(__file__).parent / "data" / "articles"
 
 _embedder: Optional[SentenceTransformer] = None
 _collection: Optional[chromadb.Collection] = None

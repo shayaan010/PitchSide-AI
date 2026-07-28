@@ -9,7 +9,7 @@ from db import init_db, record_article, is_ingested, get_upload_articles, delete
 
 logger = logging.getLogger(__name__)
 
-ARTICLES_PATH = Path(__file__).parent.parent / "data" / "articles"
+ARTICLES_PATH = Path(__file__).parent / "data" / "articles"
 
 MAX_STORED_UPLOADS = 50
 MAX_PDF_PAGES = 200

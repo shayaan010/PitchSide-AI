@@ -11,7 +11,7 @@ import requests
 import trafilatura
 from bs4 import BeautifulSoup
 
-ARTICLES_PATH = Path(__file__).parent.parent / "data" / "articles"
+ARTICLES_PATH = Path(__file__).parent / "data" / "articles"
 REQUEST_DELAY = 2.0
 
 KNOWN_TEAMS = [

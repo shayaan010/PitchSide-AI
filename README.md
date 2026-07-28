@@ -73,7 +73,7 @@ curl -X POST http://localhost:8000/scrape \
   -d '{"sources": ["bbc", "guardian", "fbref"], "max_articles": 50, "then_ingest": true}'
 ```
 
-Or drop `.txt` files into `data/articles/` and trigger ingestion manually:
+Or drop `.txt` files into `backend/data/articles/` and trigger ingestion manually:
 
 ```bash
 curl -X POST http://localhost:8000/ingest
