@@ -11,7 +11,7 @@ env/
 
 # Data — the prebuilt index ships with the repo so deploys have a corpus.
 # Rebuild with `python backend/seed.py` or POST /ingest, then re-commit.
-backend/data/chroma_runtime/
+backend/data/chroma_runtime*
 *.sqlite3-wal
 *.sqlite3-shm
 backend/data/articles.db-wal

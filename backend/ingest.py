@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import threading
 import uuid
 from pathlib import Path
 from typing import Optional
@@ -17,26 +18,41 @@ ARTICLES_PATH = Path(__file__).parent / "data" / "articles"
 
 _embedder: Optional[SentenceTransformer] = None
 _collection: Optional[chromadb.Collection] = None
+_init_lock = threading.Lock()
 
 
 def get_embedder() -> SentenceTransformer:
     global _embedder
     if _embedder is None:
-        _embedder = SentenceTransformer("all-MiniLM-L6-v2")
+        with _init_lock:
+            if _embedder is None:
+                _embedder = SentenceTransformer("all-MiniLM-L6-v2")
     return _embedder
+
+
+def _prepare_runtime_copy() -> None:
+    if CHROMA_PATH.resolve() == SEED_CHROMA_PATH.resolve():
+        return
+    if CHROMA_PATH.exists() or not SEED_CHROMA_PATH.exists():
+        return
+
+    staging = CHROMA_PATH.with_name(CHROMA_PATH.name + ".tmp")
+    shutil.rmtree(staging, ignore_errors=True)
+    shutil.copytree(SEED_CHROMA_PATH, staging)
+    try:
+        os.replace(staging, CHROMA_PATH)
+    except OSError:
+        shutil.rmtree(staging, ignore_errors=True)
 
 
 def get_collection() -> chromadb.Collection:
     global _collection
     if _collection is None:
-        if (
-            CHROMA_PATH.resolve() != SEED_CHROMA_PATH.resolve()
-            and not CHROMA_PATH.exists()
-            and SEED_CHROMA_PATH.exists()
-        ):
-            shutil.copytree(SEED_CHROMA_PATH, CHROMA_PATH)
-        client = chromadb.PersistentClient(path=str(CHROMA_PATH))
-        _collection = client.get_or_create_collection("tactics")
+        with _init_lock:
+            if _collection is None:
+                _prepare_runtime_copy()
+                client = chromadb.PersistentClient(path=str(CHROMA_PATH))
+                _collection = client.get_or_create_collection("tactics")
     return _collection
 
 
