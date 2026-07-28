@@ -24,7 +24,7 @@
 ---
 
 ## About The Project
-<img width="2540" height="1176" alt="image" src="https://github.com/user-attachments/assets/09f2edf1-7484-42f6-85ec-3fd369802bf9" />
+<img width="1917" height="922" alt="image" src="https://github.com/user-attachments/assets/55416ec2-ec93-46b5-94e7-1f0d78970be8" />
 
 
 **Pitchside AI** is a RAG-powered research workbench for football tactics. It lets you query a library of ingested match reports and analysis articles to answer questions like *"How did Arsenal's pressing change from 2022 to 2024?"* — and every answer is grounded in a cited source.
