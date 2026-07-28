@@ -93,6 +93,13 @@ def get_team_summary(aliases: set[str], recent_limit: int = 5) -> dict:
         if {t.strip().lower() for t in row["teams"].split(",")} & aliases
     ]
 
+    def about_team(row) -> bool:
+        title = row["title"].lower()
+        return any(alias in title for alias in aliases)
+
+    focused = [row for row in matched if about_team(row)]
+    ranked = focused + [row for row in matched if not about_team(row)]
+
     dates = sorted(row["article_date"] for row in matched if row["article_date"])
     competitions: dict[str, int] = {}
     for row in matched:
@@ -102,6 +109,7 @@ def get_team_summary(aliases: set[str], recent_limit: int = 5) -> dict:
 
     return {
         "articles": len(matched),
+        "focused": len(focused),
         "date_from": dates[0] if dates else None,
         "date_to": dates[-1] if dates else None,
         "competitions": sorted(competitions, key=competitions.get, reverse=True)[:4],
@@ -111,8 +119,9 @@ def get_team_summary(aliases: set[str], recent_limit: int = 5) -> dict:
                 "source": row["source"],
                 "url": row["url"],
                 "date": row["article_date"],
+                "about": about_team(row),
             }
-            for row in matched[:recent_limit]
+            for row in ranked[:recent_limit]
         ],
     }
 

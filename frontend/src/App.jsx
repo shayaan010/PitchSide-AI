@@ -338,6 +338,8 @@ export default function App() {
 
       <TeamModal
         team={teamModal}
+        apiKey={apiKey}
+        onRequireKey={() => setKeyModalOpen(true)}
         onClose={() => setTeamModal(null)}
         isFiltered={selectedTeam === teamModal}
         onFilter={() => { setSelectedTeam(teamModal); setTeamModal(null); setSidebarOpen(false) }}

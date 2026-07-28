@@ -31,6 +31,7 @@ from generate import generate_answer, classify_question
 from agent import run_agent
 from upload import ingest_upload, retrieve_from_upload
 from db import init_db, get_all_articles, get_corpus_stats, get_team_summary
+from teams import get_profile
 from scraper import scrape_bbc, scrape_guardian, scrape_fbref_fixtures, save_article
 
 logger = logging.getLogger(__name__)
@@ -207,8 +208,52 @@ def stats(request: Request):
 def team(request: Request, name: str):
     if not name.strip() or len(name) > 60:
         raise HTTPException(status_code=400, detail="Invalid team name.")
-    summary = get_team_summary(expand_teams([name]))
-    return {"name": name, **summary}
+    aliases = expand_teams([name])
+    return {"name": name, "profile": get_profile(aliases), **get_team_summary(aliases)}
+
+
+@app.post("/team/{name}/summary")
+@limiter.limit("5/minute;30/day")
+def team_season_summary(
+    request: Request,
+    name: str,
+    client: anthropic.Anthropic = Depends(get_anthropic_client),
+):
+    if not name.strip() or len(name) > 60:
+        raise HTTPException(status_code=400, detail="Invalid team name.")
+
+    chunks = retrieve(f"{name} season results form performance", teams=[name], top_k=10)
+    if not chunks:
+        raise HTTPException(status_code=404, detail="No indexed coverage for that team yet.")
+
+    question = (
+        f"Summarise {name}'s 2025/26 season in 3-4 sentences, using only the sources. "
+        "Cover league finish, cup runs and any manager or squad changes that the sources mention. "
+        "If the sources do not cover something, say so rather than guessing."
+    )
+
+    try:
+        answer, raw_sources, _ = generate_answer(question, chunks, client)
+    except anthropic.AuthenticationError:
+        raise HTTPException(status_code=401, detail="Invalid Anthropic API key.")
+    except anthropic.PermissionDeniedError:
+        raise HTTPException(status_code=403, detail="This key doesn't have permission for that model.")
+    except anthropic.RateLimitError:
+        raise HTTPException(status_code=429, detail="Your Anthropic account hit a rate limit. Try again shortly.")
+    except anthropic.APIStatusError as e:
+        logger.error("Anthropic API error: %s", e)
+        raise HTTPException(status_code=e.status_code, detail="Anthropic API request failed.")
+    except anthropic.APIConnectionError as e:
+        logger.error("Anthropic connection error: %s", e)
+        raise HTTPException(status_code=502, detail="Couldn't reach Anthropic. Try again.")
+
+    return {
+        "summary": answer,
+        "sources": [
+            {"title": s["article_title"], "source": s["source"], "date": s["article_date"]}
+            for s in raw_sources
+        ],
+    }
 
 
 @app.get("/articles")

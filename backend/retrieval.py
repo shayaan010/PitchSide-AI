@@ -2,15 +2,12 @@ from typing import Optional
 
 from ingest import get_embedder, get_collection
 
-TEAM_ALIASES = {
-    "man city": ["manchester city"],
-    "man utd": ["manchester united"],
-    "man united": ["manchester united"],
-    "spurs": ["tottenham"],
-    "tottenham": ["spurs"],
-    "wolves": ["wolverhampton"],
-    "wolverhampton": ["wolves"],
-}
+TEAM_GROUPS = [
+    {"man city", "man. city", "manchester city"},
+    {"man united", "man utd", "manchester united"},
+    {"spurs", "tottenham"},
+    {"wolves", "wolverhampton"},
+]
 
 
 def expand_teams(teams: list[str]) -> set[str]:
@@ -20,7 +17,9 @@ def expand_teams(teams: list[str]) -> set[str]:
         if not key:
             continue
         expanded.add(key)
-        expanded.update(TEAM_ALIASES.get(key, []))
+        for group in TEAM_GROUPS:
+            if key in group:
+                expanded |= group
     return expanded
 
 

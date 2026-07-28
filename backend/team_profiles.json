@@ -1,0 +1,265 @@
+{
+  "fetched": "2026-07-28",
+  "teams": {
+    "arsenal": {
+      "display": "Arsenal",
+      "stadium": "Emirates Stadium",
+      "founded": 1886,
+      "honours": [
+        [
+          "First Division/Premier League",
+          14
+        ],
+        [
+          "FA Cup",
+          14
+        ],
+        [
+          "EFL Cup",
+          2
+        ],
+        [
+          "UEFA Cup Winners' Cup",
+          1
+        ]
+      ],
+      "source": "https://en.wikipedia.org/wiki/Arsenal_F.C."
+    },
+    "liverpool": {
+      "display": "Liverpool",
+      "stadium": "Anfield",
+      "founded": 1892,
+      "honours": [
+        [
+          "First Division/Premier League",
+          20
+        ],
+        [
+          "FA Cup",
+          8
+        ],
+        [
+          "Football League Cup/EFL Cup",
+          10
+        ],
+        [
+          "European Cup/UEFA Champions League",
+          6
+        ],
+        [
+          "UEFA Cup/UEFA Europa League",
+          3
+        ],
+        [
+          "UEFA Super Cup",
+          4
+        ],
+        [
+          "FIFA Club World Cup",
+          1
+        ]
+      ],
+      "source": "https://en.wikipedia.org/wiki/Liverpool_F.C."
+    },
+    "manchester city": {
+      "display": "Manchester City",
+      "stadium": "Etihad Stadium",
+      "founded": 1880,
+      "honours": [
+        [
+          "First Division/Premier League",
+          10
+        ],
+        [
+          "FA Cup",
+          8
+        ],
+        [
+          "Football League Cup/EFL Cup",
+          9
+        ],
+        [
+          "UEFA Champions League",
+          1
+        ],
+        [
+          "European Cup Winners' Cup",
+          1
+        ],
+        [
+          "UEFA Super Cup",
+          1
+        ],
+        [
+          "FIFA Club World Cup",
+          1
+        ]
+      ],
+      "source": "https://en.wikipedia.org/wiki/Manchester_City_F.C."
+    },
+    "chelsea": {
+      "display": "Chelsea",
+      "stadium": "Stamford Bridge",
+      "founded": 1905,
+      "honours": [
+        [
+          "First Division/Premier League",
+          6
+        ],
+        [
+          "FA Cup",
+          8
+        ],
+        [
+          "Football League Cup",
+          5
+        ],
+        [
+          "UEFA Champions League",
+          2
+        ],
+        [
+          "UEFA Europa League",
+          2
+        ],
+        [
+          "UEFA Cup Winners' Cup",
+          2
+        ],
+        [
+          "UEFA Super Cup",
+          2
+        ],
+        [
+          "FIFA Club World Cup",
+          2
+        ]
+      ],
+      "source": "https://en.wikipedia.org/wiki/Chelsea_F.C."
+    },
+    "manchester united": {
+      "display": "Manchester United",
+      "stadium": "Old Trafford",
+      "founded": 1878,
+      "honours": [
+        [
+          "First Division/Premier League",
+          20
+        ],
+        [
+          "FA Cup",
+          13
+        ],
+        [
+          "Football League Cup/EFL Cup",
+          6
+        ],
+        [
+          "European Cup/UEFA Champions League",
+          3
+        ],
+        [
+          "European Cup Winners' Cup",
+          1
+        ],
+        [
+          "UEFA Europa League",
+          1
+        ],
+        [
+          "UEFA Super Cup",
+          1
+        ],
+        [
+          "FIFA Club World Cup",
+          1
+        ],
+        [
+          "Intercontinental Cup",
+          1
+        ]
+      ],
+      "source": "https://en.wikipedia.org/wiki/Manchester_United_F.C."
+    },
+    "tottenham": {
+      "display": "Tottenham",
+      "stadium": "Tottenham Hotspur Stadium",
+      "founded": 1882,
+      "honours": [
+        [
+          "First Division",
+          2
+        ],
+        [
+          "FA Cup",
+          8
+        ],
+        [
+          "League Cup",
+          4
+        ],
+        [
+          "UEFA Cup Winners' Cup",
+          1
+        ],
+        [
+          "UEFA Cup/UEFA Europa League",
+          3
+        ]
+      ],
+      "source": "https://en.wikipedia.org/wiki/Tottenham_Hotspur_F.C."
+    },
+    "newcastle": {
+      "display": "Newcastle",
+      "stadium": "St James' Park",
+      "founded": 1881,
+      "honours": [
+        [
+          "First Division/Premier League",
+          4
+        ],
+        [
+          "FA Cup",
+          6
+        ],
+        [
+          "Football League Cup/EFL Cup",
+          1
+        ]
+      ],
+      "source": "https://en.wikipedia.org/wiki/Newcastle_United_F.C."
+    },
+    "aston villa": {
+      "display": "Aston Villa",
+      "stadium": "Villa Park",
+      "founded": 1874,
+      "honours": [
+        [
+          "First Division/Premier League",
+          7
+        ],
+        [
+          "FA Cup",
+          7
+        ],
+        [
+          "Football League Cup/EFL Cup",
+          5
+        ],
+        [
+          "European Cup",
+          1
+        ],
+        [
+          "UEFA Europa League",
+          1
+        ],
+        [
+          "European Super Cup",
+          1
+        ]
+      ],
+      "source": "https://en.wikipedia.org/wiki/Aston_Villa_F.C."
+    }
+  }
+}
