@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import date
 from pathlib import Path
@@ -6,7 +7,12 @@ from typing import Optional
 from ingest import get_embedder, get_collection, chunk_text
 from db import init_db, record_article, is_ingested
 
+logger = logging.getLogger(__name__)
+
 ARTICLES_PATH = Path(__file__).parent.parent / "data" / "articles"
+
+MAX_PDF_PAGES = 200
+MAX_EXTRACTED_CHARS = 500_000
 
 
 def _extract_text_pdf(data: bytes) -> str:
@@ -14,16 +20,21 @@ def _extract_text_pdf(data: bytes) -> str:
     import io
     reader = pypdf.PdfReader(io.BytesIO(data))
     pages = []
-    for page in reader.pages:
+    total = 0
+    for i, page in enumerate(reader.pages):
+        if i >= MAX_PDF_PAGES or total >= MAX_EXTRACTED_CHARS:
+            logger.warning("PDF truncated at page %d (%d chars extracted)", i, total)
+            break
         text = page.extract_text()
         if text:
-            pages.append(text.strip())
+            text = text.strip()
+            pages.append(text)
+            total += len(text)
     return "\n\n".join(pages)
 
 
 def _extract_text_txt(data: bytes) -> str:
     text = data.decode("utf-8", errors="replace")
-    # If it has our header format, strip the header and use only the body
     if "---" in text:
         parts = text.split("---", 1)
         if len(parts) == 2:
@@ -48,6 +59,12 @@ def ingest_upload(
         body = _extract_text_pdf(data)
     else:
         body = _extract_text_txt(data)
+
+    if len(body) > MAX_EXTRACTED_CHARS:
+        logger.warning(
+            "Upload %s truncated from %d to %d chars", filename, len(body), MAX_EXTRACTED_CHARS
+        )
+        body = body[:MAX_EXTRACTED_CHARS]
 
     if not body:
         raise ValueError("Could not extract any text from the uploaded file.")
@@ -80,7 +97,6 @@ def ingest_upload(
 
     collection.add(ids=ids, embeddings=embeddings, documents=chunks, metadatas=metadatas)
 
-    # Save a copy to data/articles/ so it survives restarts
     ARTICLES_PATH.mkdir(parents=True, exist_ok=True)
     safe_name = f"upload_{article_id[:8]}_{Path(filename).stem[:40]}.txt"
     dest = ARTICLES_PATH / safe_name

@@ -1,5 +1,8 @@
+import safeUrl from '../safeUrl'
+
 export default function SourceCard({ source, index }) {
-  const hasRealUrl = source.url && !source.url.includes('example.com') && source.url !== 'https://...'
+  const href = safeUrl(source.url)
+  const hasRealUrl = href && !source.url.includes('example.com') && source.url !== 'https://...'
 
   return (
     <div style={{
@@ -35,7 +38,7 @@ export default function SourceCard({ source, index }) {
 
       {hasRealUrl && (
         <a
-          href={source.url}
+          href={href}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: '#2D6A4F', fontSize: 12, marginTop: 8, display: 'inline-block', fontWeight: 500 }}

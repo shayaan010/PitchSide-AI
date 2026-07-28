@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import safeUrl from '../safeUrl'
 
 const C = {
   green: '#1a9e6e',
@@ -29,7 +30,8 @@ function Avatar() {
 
 function SourceChip({ source, index }) {
   const [expanded, setExpanded] = useState(false)
-  const hasRealUrl = source.url && !source.url.includes('example.com') && source.url !== 'https://...' && source.url !== ''
+  const href = safeUrl(source.url)
+  const hasRealUrl = href && !source.url.includes('example.com') && source.url !== 'https://...'
 
   return (
     <div>
@@ -63,7 +65,7 @@ function SourceChip({ source, index }) {
         }}>
           <p style={{ marginBottom: hasRealUrl ? 8 : 0 }}>{source.excerpt}</p>
           {hasRealUrl && (
-            <a href={source.url} target="_blank" rel="noopener noreferrer"
+            <a href={href} target="_blank" rel="noopener noreferrer"
               style={{ color: C.green, fontSize: 12, fontWeight: 500 }}>
               View article →
             </a>
@@ -202,7 +204,6 @@ export default function MessageBubble({ message, isWelcome }) {
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
       <Avatar />
       <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Agent trace */}
         {trace.length > 0 && (
           <div style={{ marginBottom: 12 }}>
             <button
@@ -240,7 +241,6 @@ export default function MessageBubble({ message, isWelcome }) {
           </div>
         )}
 
-        {/* Confidence indicator */}
         {conf && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: conf.color }} />
@@ -250,10 +250,8 @@ export default function MessageBubble({ message, isWelcome }) {
           </div>
         )}
 
-        {/* Answer */}
         <Answer text={message.answer} />
 
-        {/* Source chips */}
         {sources.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
             {sources.map((src, i) => (

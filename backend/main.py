@@ -1,5 +1,6 @@
 import logging
 import os
+import secrets
 import sys
 from pathlib import Path
 
@@ -13,6 +14,7 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 import anthropic
 from fastapi import FastAPI, Depends, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -33,15 +35,15 @@ from scraper import scrape_bbc, scrape_guardian, scrape_fbref_fixtures, save_art
 
 logger = logging.getLogger(__name__)
 
-# --- Auth ---
 _api_key_header = APIKeyHeader(name="X-API-Token", auto_error=False)
 
 def verify_token(api_key: str = Depends(_api_key_header)):
     expected = os.environ.get("API_TOKEN")
-    if not expected or api_key != expected:
+    if not expected or not api_key:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if not secrets.compare_digest(api_key.encode("utf-8"), expected.encode("utf-8")):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-# --- BYOK: per-request Anthropic client from the caller's own key ---
 _anthropic_key_header = APIKeyHeader(name="X-Anthropic-Key", auto_error=False)
 
 def get_anthropic_client(api_key: str = Depends(_anthropic_key_header)) -> anthropic.Anthropic:
@@ -49,15 +51,12 @@ def get_anthropic_client(api_key: str = Depends(_anthropic_key_header)) -> anthr
         raise HTTPException(status_code=400, detail="Anthropic API key required. Add yours in Settings.")
     return anthropic.Anthropic(api_key=api_key)
 
-# --- Rate limiter ---
 def get_client_ip(request: Request) -> str:
-    # Railway's edge proxy is the only way to reach this app, so the
-    # left-most X-Forwarded-For entry (the original client) can be trusted
-    # here — request.client.host would otherwise be Railway's proxy IP,
-    # shared by every request.
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        entries = [p.strip() for p in forwarded.split(",") if p.strip()]
+        if entries:
+            return entries[-1]
     return request.client.host if request.client else "127.0.0.1"
 
 
@@ -88,17 +87,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+_MULTIPART_SLACK = 64 * 1024
+_UPLOAD_CHUNK = 64 * 1024
+
+
+@app.middleware("http")
+async def reject_oversized_uploads(request: Request, call_next):
+    if request.url.path == "/upload":
+        declared = request.headers.get("content-length")
+        if declared and declared.isdigit() and int(declared) > MAX_UPLOAD_BYTES + _MULTIPART_SLACK:
+            return JSONResponse(status_code=413, content={"detail": "File too large (max 10 MB)."})
+    return await call_next(request)
+
 
 @app.post("/upload", response_model=UploadResponse)
 @limiter.limit("5/minute;20/day")
-async def upload_file(request: Request, file: UploadFile = File(...)):
+def upload_file(request: Request, file: UploadFile = File(...)):
     allowed = {".txt", ".pdf"}
     ext = "." + file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
     if ext not in allowed:
         raise HTTPException(status_code=400, detail="Only .txt and .pdf files are supported.")
-    data = await file.read()
-    if len(data) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File too large (max 10 MB).")
+
+    buf = bytearray()
+    while True:
+        chunk = file.file.read(_UPLOAD_CHUNK)
+        if not chunk:
+            break
+        buf.extend(chunk)
+        if len(buf) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="File too large (max 10 MB).")
+    data = bytes(buf)
+
     try:
         result = ingest_upload(file.filename, data, file.content_type or "")
     except ValueError as e:
