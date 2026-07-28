@@ -9,9 +9,12 @@ env/
 # Environment
 .env
 
-# Data (generated at runtime)
-data/chroma/
-data/articles.db
+# Data — the prebuilt index ships with the repo so deploys have a corpus.
+# Rebuild with `python backend/seed.py` or POST /ingest, then re-commit.
+*.sqlite3-wal
+*.sqlite3-shm
+data/articles.db-wal
+data/articles.db-shm
 
 # Node
 frontend/node_modules/

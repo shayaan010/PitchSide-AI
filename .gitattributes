@@ -1,0 +1,5 @@
+data/chroma/** binary
+data/articles.db binary
+*.sqlite3 binary
+*.bin binary
+*.pickle binary
