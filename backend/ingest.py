@@ -1,4 +1,6 @@
+import os
 import re
+import shutil
 import uuid
 from pathlib import Path
 from typing import Optional
@@ -8,7 +10,9 @@ from sentence_transformers import SentenceTransformer
 
 from db import init_db, is_ingested, record_article
 
-CHROMA_PATH = Path(__file__).parent / "data" / "chroma"
+SEED_CHROMA_PATH = Path(__file__).parent / "data" / "chroma"
+_override = os.environ.get("CHROMA_PATH")
+CHROMA_PATH = Path(_override) if _override else Path(__file__).parent / "data" / "chroma_runtime"
 ARTICLES_PATH = Path(__file__).parent / "data" / "articles"
 
 _embedder: Optional[SentenceTransformer] = None
@@ -25,6 +29,12 @@ def get_embedder() -> SentenceTransformer:
 def get_collection() -> chromadb.Collection:
     global _collection
     if _collection is None:
+        if (
+            CHROMA_PATH.resolve() != SEED_CHROMA_PATH.resolve()
+            and not CHROMA_PATH.exists()
+            and SEED_CHROMA_PATH.exists()
+        ):
+            shutil.copytree(SEED_CHROMA_PATH, CHROMA_PATH)
         client = chromadb.PersistentClient(path=str(CHROMA_PATH))
         _collection = client.get_or_create_collection("tactics")
     return _collection
